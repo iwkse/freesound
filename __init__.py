@@ -23,7 +23,7 @@ bl_info = {
     "blender": (2, 77, 1),
     "category": "Sequencer",
     "location": "Sequencer",
-    "description": "Connect to http://freesound.org for goodies",
+    "description": "Connect to freesound to list sounds",
     "support": "COMMUNITY"}
 
 
@@ -65,9 +65,10 @@ class Freesound_Connect(bpy.types.Operator):
         s = self.client.check_access()
         if (s):
             addon_data.freesound_access = True
+            return {'FINISHED'}
         else:
             addon_data.freesound_access = False
-        return {'FINISHED'}
+            return {'FINISHED'}
 
 # Registration
 def register():
