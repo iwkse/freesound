@@ -156,14 +156,29 @@ class FreesoundPanel(bpy.types.Panel):
         frame_current = sce.frame_current
         freesound_api = context.scene.freesound_data.freesound_api
         addon_data = context.scene.freesound_data
-        if (addon_data.freesound_access):
-            layout.alert = False
-        else:
-            layout.alert = True
         split = layout.split(percentage=0.8)
 
-        split.prop(
-            addon_data,
-            "freesound_api",
-            text="Api Key")
-        split.operator("freesound.connect", text='Connect', icon='PLUGIN')
+
+        if (addon_data.freesound_access):
+            split.prop(
+                addon_data,
+                "freesound_api",
+                text="Api Key")
+            split.operator("freesound.connect", text='Connect', icon='PLUGIN')
+            split2 = layout.split(percentage=0.8)
+            split2.prop(
+                addon_data,
+                "search_item",
+                text=""
+            )
+            split2.operator("freesound.search", text="Search", icon='VIEWZOOM')
+            freesound_ptr = bpy.types.AnyType(bpy.context.scene.freesound_data)
+            row = layout.row()
+            row.template_list("FREESOUNDList", "", freesound_ptr, "freesound_list", freesound_ptr, "active_list_item", type='DEFAULT')
+
+        else:
+            split.prop(
+                addon_data,
+                "freesound_api",
+                text="Api Key")
+            split.operator("freesound.connect", text='Connect', icon='PLUGIN')
