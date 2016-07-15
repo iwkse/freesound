@@ -37,7 +37,9 @@ import bpy
 import os.path
 from bpy.types import Menu
 from bpy.types import Header
+import aud
 from . import freesound
+from freesound.freesound_data import FREESOUNDList
 
 class FreeSoundItem(bpy.types.PropertyGroup):
     sound_id = bpy.props.StringProperty(
@@ -112,12 +114,21 @@ class Freesound_Play(bpy.types.Operator):
     bl_idname = 'freesound.play'
     bl_description = 'Preview the sound'
     bl_options = {'REGISTER', 'UNDO'}
+    handle = 0
     def execute(self, context):
         addon_data = context.scene.freesound_data
         client = Freesound_Connect.get_client(Freesound_Connect)
 
-        sound_info = client.get_sound(addon_data.active_sound_id)
-        print (sound_info)
+        sound_info = client.get_sound(FREESOUNDList.get_sound_id(FREESOUNDList))
+        res = sound_info.retrieve_preview('/tmp')
+        soundfile = res[0]
+        device = aud.device()
+        factory = aud.Factory(soundfile)
+        if (Freesound_Play.handle):
+            Freesound_Play.handle.stop()
+            Freesound_Play.handle = device.play(factory)
+        else:
+            Freesound_Play.handle = device.play(factory)
 
         return {'FINISHED'}
 # Freesound Add
