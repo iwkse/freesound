@@ -17,8 +17,7 @@
 # ##### END GPL LICENSE BLOCK #####
 
 import bpy
-import freesound
-from . import freesound_data 
+from . import freesound_api
 
 class SEQUENCER_EXTRA_MT_input(bpy.types.Menu):
     bl_label = "Input"
@@ -178,7 +177,11 @@ class FreesoundPanel(bpy.types.Panel):
             split3 = layout.split(percentage=0.9)
             split3.template_list("FREESOUNDList", "", freesound_ptr, "freesound_list", freesound_ptr, "active_list_item", type='DEFAULT')
             col = split3.column(align=True)
-            col.operator("freesound.play", icon='TRIA_RIGHT')
+            if (Freesound_Play.handle):
+                col.operator("freesound.play", icon='TRIA_RIGHT')
+            else:
+                col.operator("freesound.play", icon='TRIA_LEFT')
+
             col.operator("freesound.add", icon='ZOOMIN')
             col.operator("freesound.nextpage", icon='PLAY_AUDIO')
 
