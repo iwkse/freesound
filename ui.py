@@ -18,6 +18,7 @@
 
 import bpy
 from . import freesound_api
+from . import freesound
 
 class SEQUENCER_EXTRA_MT_input(bpy.types.Menu):
     bl_label = "Input"
@@ -177,10 +178,10 @@ class FreesoundPanel(bpy.types.Panel):
             split3 = layout.split(percentage=0.9)
             split3.template_list("FREESOUNDList", "", freesound_ptr, "freesound_list", freesound_ptr, "active_list_item", type='DEFAULT')
             col = split3.column(align=True)
-            if (Freesound_Play.handle):
-                col.operator("freesound.play", icon='TRIA_RIGHT')
+            if (addon_data.sound_is_playing):
+                col.operator("freesound.pause", icon='PAUSE')
             else:
-                col.operator("freesound.play", icon='TRIA_LEFT')
+                col.operator("freesound.play", icon='PLAY')
 
             col.operator("freesound.add", icon='ZOOMIN')
             col.operator("freesound.nextpage", icon='PLAY_AUDIO')
