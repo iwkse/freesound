@@ -36,6 +36,12 @@ class FreeSoundData(bpy.types.PropertyGroup):
         description="Your freesound API Key.",
         default="Get it here http://www.freesound.org/apiv2/apply/"
     )
+    soundfile = bpy.props.StringProperty(
+        name="Sound Path",
+        description="Path to the file",
+        default="/tmp"
+    )
+
     sound_is_playing = bpy.props.BoolProperty(
         description = 'Sound is playing'
     )
@@ -81,16 +87,7 @@ class Freesound_Add(bpy.types.Operator):
     bl_options = {'REGISTER', 'UNDO'}
     def execute(self, context):
         addon_data = context.scene.freesound_data
-        client = Freesound_Connect.get_client(Freesound_Connect)
-        results_pager = client.text_search(query=addon_data.search_item,sort="rating_desc",fields="id,name,previews,username")
-        for i in range(0, len(results_pager.results)):
-            sound = results_pager[i]
-            _sound = addon_data.freesound_list.add()
-            _sound.name = sound.name
-            _sound.author = sound.username
-
-
-            print ("\t- " + sound.name + " by " + sound.username + sound.previews)
+        bpy.ops.sequencer.sound_strip_add(filepath=addon_data.soundfile, frame_start=bpy.context.scene.frame_current)
 
         return {'FINISHED'}
 # Freesound Search
@@ -177,9 +174,7 @@ class Freesound_Play(bpy.types.Operator):
         client = Freesound_Connect.get_client(Freesound_Connect)
 
         sound_id = FREESOUNDList.get_sound_id(FREESOUNDList)
-        print (sound_id)
         sound_info = client.get_sound(sound_id)
-        print (str(sound_info))
         preview_hq_file = str(sound_info.previews.preview_hq_mp3.split("/")[-1])
         #FIXME Store the file in Blender
         if (os.path.isfile('/tmp/' + preview_hq_file)):
@@ -187,7 +182,7 @@ class Freesound_Play(bpy.types.Operator):
         else:
             res = sound_info.retrieve_preview('/tmp')
             soundfile = res[0]
-
+        addon_data.soundfile = soundfile
         device = aud.device()
         factory = aud.Factory(soundfile)
         Freesound_Play.handle = device.play(factory)
