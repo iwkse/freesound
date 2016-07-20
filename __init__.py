@@ -39,15 +39,12 @@ from bpy.types import Menu
 from bpy.types import Header
 from .freesound import *
 
-
 # Registration
 def register():
     bpy.utils.register_module(__name__)
 
 # Extend the scene class here to include the addon data
     bpy.types.Scene.freesound_data = bpy.props.PointerProperty(type=FreeSoundData)
-
-
 
 def unregister():
     bpy.utils.unregister_module(__name__)

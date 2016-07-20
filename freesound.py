@@ -54,7 +54,7 @@ class FreeSoundData(bpy.types.PropertyGroup):
     soundfile = bpy.props.StringProperty(
         name="Sound Path",
         description="Path to the file",
-        default="/tmp"
+        default=os.path.dirname(os.path.realpath(__file__))
     )
     sound_is_playing = bpy.props.BoolProperty(
         description = 'Sound is playing'
@@ -112,11 +112,11 @@ class Freesound_Add(bpy.types.Operator):
             preview_file = str(sound_info.previews.preview_hq_mp3.split("/")[-1])
         else:
             preview_file = str(sound_info.previews.preview_lq_mp3.split("/")[-1])
-        #FIXME Store the file in Blender
-        if (os.path.isfile('/tmp/' + preview_file)):
-            soundfile = '/tmp/' + preview_file
+        
+        if (os.path.isfile(os.path.dirname(os.path.realpath(__file__)) + '/' + preview_file)):
+            soundfile = os.path.dirname(os.path.realpath(__file__)) + '/' + preview_file
         else:
-            res = sound_info.retrieve_preview('/tmp', addon_data.high_quality)
+            res = sound_info.retrieve_preview(os.path.dirname(os.path.realpath(__file__)), addon_data.high_quality)
             soundfile = res[0]
         addon_data.soundfile = soundfile
         bpy.ops.sequencer.sound_strip_add(filepath=addon_data.soundfile, frame_start=bpy.context.scene.frame_current)
@@ -210,11 +210,10 @@ class Freesound_Play(bpy.types.Operator):
         else:
             preview_file = str(sound_info.previews.preview_lq_mp3.split("/")[-1])
 
-        #FIXME Store the file in Blender
-        if (os.path.isfile('/tmp/' + preview_file)):
-            soundfile = '/tmp/' + preview_file
+        if (os.path.isfile(os.path.dirname(os.path.realpath(__file__)) + '/' + preview_file)):
+            soundfile = os.path.dirname(os.path.realpath(__file__)) + '/' + preview_file
         else:
-            res = sound_info.retrieve_preview('/tmp', addon_data.high_quality)
+            res = sound_info.retrieve_preview(os.path.dirname(os.path.realpath(__file__)), addon_data.high_quality)
             soundfile = res[0]
         addon_data.soundfile = soundfile
         device = aud.device()
