@@ -37,7 +37,7 @@ import bpy
 import os.path
 from bpy.types import Menu
 from bpy.types import Header
-from freesound.freesound import *
+from .freesound import *
 
 
 # Registration
