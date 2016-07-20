@@ -293,14 +293,18 @@ class Sound(FreesoundObject):
         uri = URIS.uri(URIS.DOWNLOAD, self.id)
         return FSRequest.retrieve(uri, self.client,path)
 
-    def retrieve_preview(self, directory, name=False):
+    def retrieve_preview(self, directory, name=False, quality=False):
         """
         Download the high quality mp3 preview.
 
         >>> sound.retrieve_preview("/tmp")
         """
-        path = os.path.join(directory, name if name else str(self.previews.preview_hq_mp3.split("/")[-1]))
-        return FSRequest.retrieve(self.previews.preview_hq_mp3, self.client,path)
+        if (not quality):
+            path = os.path.join(directory, name if name else str(self.previews.preview_lq_mp3.split("/")[-1]))
+            return FSRequest.retrieve(self.previews.preview_lq_mp3, self.client,path)
+        else:
+            path = os.path.join(directory, name if name else str(self.previews.preview_hq_mp3.split("/")[-1]))
+            return FSRequest.retrieve(self.previews.preview_hq_mp3, self.client,path)
 
     def get_analysis(self, descriptors=None):
         """

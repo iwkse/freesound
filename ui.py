@@ -62,6 +62,9 @@ class FreesoundPanel(bpy.types.Panel):
                 text=""
             )
             split2.operator("freesound.search", text="Search", icon='VIEWZOOM')
+            row = layout.row()
+            row.prop(addon_data, "high_quality")
+            row.prop(addon_data, "license")
             freesound_ptr = bpy.types.AnyType(bpy.context.scene.freesound_data)
             split3 = layout.split(percentage=0.9)
             split3.template_list("FREESOUNDList", "", freesound_ptr, "freesound_list", freesound_ptr, "active_list_item", type='DEFAULT')
