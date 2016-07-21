@@ -42,12 +42,14 @@ class FreeSoundData(bpy.types.PropertyGroup):
     )
     license = bpy.props.EnumProperty(
         items = [
-            ('ATTRIBUTION', 'Attribution', 'Attribution'),
-            ('ATTRIBUTION_NONCOMMERCIAL', 'Attribution Non-Commercial', 'Attribution Non-Commercial'),
-            ('CREATIVE_COMMONS_0', 'Creative Commons 0', 'Creative Commons 0')
+            ('ALL', 'All', 'All'),
+            ('Attribution', 'Attribution', 'Attribution'),
+            ('Attribution Noncommercial', 'Attribution Noncommercial', 'Attribution Noncommercial'),
+            ('Creative Commons 0', 'Creative Commons 0', 'Creative Commons 0'),
+            ('Sampling+', 'Sampling+', 'Sampling+')
         ],
         name="License",
-        default='ATTRIBUTION',
+        default='ALL',
         description="The type of license"
     )
 
@@ -134,7 +136,12 @@ class Freesound_Search(bpy.types.Operator):
         client = Freesound_Connect.get_client(Freesound_Connect)
         addon_data = context.scene.freesound_data
         addon_data.freesound_loading = True
-        Freesound_Search.results_pager = client.text_search(query=addon_data.search_item,sort="rating_desc",fields="id,name,previews,username,duration")
+        if (addon_data.license != 'ALL'):
+            filter_string='license:"' + addon_data.license + '"'
+            Freesound_Search.results_pager = client.text_search(query=addon_data.search_item,filter=filter_string, sort="rating_desc",fields="id,name,previews,username,duration")
+        else:
+            Freesound_Search.results_pager = client.text_search(query=addon_data.search_item, sort="rating_desc",fields="id,name,previews,username,duration")
+        
         addon_data.freesound_list.clear()
         for i in range(0, len(Freesound_Search.results_pager.results)):
             sound = Freesound_Search.results_pager[i]
