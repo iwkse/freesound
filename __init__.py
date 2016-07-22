@@ -19,11 +19,12 @@
 bl_info = {
     "name": "Freesound",
     "author": "Salvatore De Paolis",
-    "version": (0, 1),
+    "version": (1, 0),
     "blender": (2, 77, 1),
     "category": "Sequencer",
     "location": "Sequencer",
     "description": "Connect to freesound to list sounds",
+    "wiki_url": "http://freesound.org/apiv2/apply",
     "support": "COMMUNITY"}
 
 
