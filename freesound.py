@@ -29,7 +29,7 @@ class FreeSoundItem(bpy.types.PropertyGroup):
     def poll(cls, context):
         return context.scene.freesound_data.active_list_item
 
-# Defines one instance of the addon data (one per scene)
+# Definess one instance of the addon data (one per scene)
 class FreeSoundData(bpy.types.PropertyGroup):
     freesound_api = bpy.props.StringProperty(
         name="Api key",
@@ -40,6 +40,18 @@ class FreeSoundData(bpy.types.PropertyGroup):
         name="HQ",
         description="Best quality play and add for non-oauth2"
     )
+    duration_start = bpy.props.FloatProperty(
+        description = "Insert duration in seconds. -1 means any",
+        default=-1,
+        min=-1,
+        precision=1
+    )
+    duration_end = bpy.props.FloatProperty(
+        description = "Insert duration in secondsi. -1 means any",
+        default=-1,
+        min=-1,
+        precision=1
+    )
     license = bpy.props.EnumProperty(
         items = [
             ('ALL', 'All', 'All'),
@@ -48,7 +60,7 @@ class FreeSoundData(bpy.types.PropertyGroup):
             ('Creative Commons 0', 'Creative Commons 0', 'Creative Commons 0'),
             ('Sampling+', 'Sampling+', 'Sampling+')
         ],
-        name="License",
+        name="",
         default='ALL',
         description="The type of license"
     )
@@ -136,11 +148,34 @@ class Freesound_Search(bpy.types.Operator):
         client = Freesound_Connect.get_client(Freesound_Connect)
         addon_data = context.scene.freesound_data
         addon_data.freesound_loading = True
-        if (addon_data.license != 'ALL'):
-            filter_string='license:"' + addon_data.license + '"'
-            Freesound_Search.results_pager = client.text_search(query=addon_data.search_item,filter=filter_string, sort="rating_desc",fields="id,name,previews,username,duration")
+        try:
+            int(addon_data.duration_start)
+        except:
+            addon_data.duration_start = "-1"
+
+        try:
+            int(addon_data.duration_end)
+        except:
+            addon_data.duration_end = "-1"
+        
+        if (addon_data.duration_start == -1):
+            duration_start = "*"
         else:
-            Freesound_Search.results_pager = client.text_search(query=addon_data.search_item, sort="rating_desc",fields="id,name,previews,username,duration")
+            duration_start = str(addon_data.duration_start)
+        if (addon_data.duration_end == -1):
+            duration_end = "*"
+        else:
+            duration_end = str(addon_data.duration_end)
+
+        duration = "duration:[" + duration_start + " TO " + duration_end + "]"
+
+        if (addon_data.license != 'ALL'):
+            filter_string=duration + ' license:"' + addon_data.license + '"'
+        else:
+            filter_string=duration
+
+        print (filter_string)
+        Freesound_Search.results_pager = client.text_search(query=addon_data.search_item,filter=filter_string, sort="rating_desc",fields="id,name,previews,username,duration")
         
         addon_data.freesound_list.clear()
         for i in range(0, len(Freesound_Search.results_pager.results)):
