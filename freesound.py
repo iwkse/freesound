@@ -65,6 +65,10 @@ class FreeSoundData(bpy.types.PropertyGroup):
         default='ALL',
         description="The type of license"
     )
+    pager_num = bpy.props.IntProperty(
+        description = "Current pager",
+        default = 0
+    )
 
     soundfile = bpy.props.StringProperty(
         name="Sound Path",
@@ -176,7 +180,6 @@ class Freesound_Search(bpy.types.Operator):
         else:
             filter_string=duration
 
-        print (filter_string)
         Freesound_Search.results_pager = client.text_search(query=addon_data.search_item,filter=filter_string, sort="rating_desc",fields="id,name,previews,username,duration")
         
         addon_data.freesound_list.clear()
@@ -191,28 +194,64 @@ class Freesound_Search(bpy.types.Operator):
         return {'FINISHED'}
     def get_results_pager(self):
         return self.results_pager
+
 # Freesound Next page search
 class Freesound_Next(bpy.types.Operator):
     bl_label = 'Next'
     bl_idname = 'freesound.nextpage'
     bl_description = 'Next page of sounds'
     bl_options = {'REGISTER', 'UNDO'}
+
     def execute(self, context):
         addon_data = context.scene.freesound_data
         client = Freesound_Connect.get_client(Freesound_Connect)
         results_pager = Freesound_Search.results_pager
+        addon_data.pager_num += 1 
+
+        if (addon_data.pager_num == results_pager.results):
+            addon_data.pager_num -= 1 
+            return {'FINISHED'}
+        
         addon_data.freesound_list.clear()
-        results_pager = results_pager.next_page()
-        Freesound_Search.results_pager = results_pager
-        for i in range(0, len(results_pager.results)):
-            sound = results_pager[i]
+        Freesound_Search.results_pager = results_pager.next_page()
+
+        for i in range(0, len(Freesound_Search.results_pager.results)):
+            sound = Freesound_Search.results_pager[i]
+            _sound = addon_data.freesound_list.add()
+            _sound.sound_id = str(sound.id)
+            _sound.name = str(sound.name)
+            _sound.duration = str(sound.duration)
+            _sound.author = str(sound.username)
+        return {'FINISHED'}
+
+# Freesound Prev page search
+class Freesound_Prev(bpy.types.Operator):
+    bl_label = 'Prev'
+    bl_idname = 'freesound.prevpage'
+    bl_description = 'Next page of sounds'
+    bl_options = {'REGISTER', 'UNDO'}
+
+    def execute(self, context):
+        addon_data = context.scene.freesound_data
+        client = Freesound_Connect.get_client(Freesound_Connect)
+        results_pager = Freesound_Search.results_pager
+        addon_data.pager_num -= 1 
+        if (addon_data.pager_num < 0):
+            addon_data.pager_num += 1 
+            return {'FINISHED'}
+        
+        addon_data.freesound_list.clear()
+        Freesound_Search.results_pager = results_pager.previous_page()
+
+        for i in range(0, len(Freesound_Search.results_pager.results)):
+            sound = Freesound_Search.results_pager[i]
             _sound = addon_data.freesound_list.add()
             _sound.sound_id = str(sound.id)
             _sound.name = sound.name
             _sound.duration = str(sound.duration)
             _sound.author = sound.username
-
         return {'FINISHED'}
+
 class FREESOUNDList(bpy.types.UIList):
     sound_id = 0
     def get_sound_id(self):

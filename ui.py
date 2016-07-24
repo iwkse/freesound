@@ -73,6 +73,7 @@ class FreesoundPanel(bpy.types.Panel):
                 col.operator("freesound.play", icon='PLAY')
 
             col.operator("freesound.add", icon='ZOOMIN')
+            col.operator("freesound.prevpage", icon='PLAY_AUDIO')
             col.operator("freesound.nextpage", icon='PLAY_AUDIO')
 
         else:
@@ -80,4 +81,4 @@ class FreesoundPanel(bpy.types.Panel):
                 addon_data,
                 "freesound_api",
                 text="Api Key")
-            split.operator("freesound.connect", text='Connect', icon='PLUGIN')
+            split.operator("freesound.connect", text='Validate', icon='PLUGIN')
