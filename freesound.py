@@ -41,13 +41,13 @@ class FreeSoundData(bpy.types.PropertyGroup):
         name="HQ",
         description="Best quality play and add for non-oauth2"
     )
-    duration_start = bpy.props.FloatProperty(
+    duration_from = bpy.props.FloatProperty(
         description = "Insert duration in seconds. -1 means any",
         default=-1,
         min=-1,
         precision=1
     )
-    duration_end = bpy.props.FloatProperty(
+    duration_to = bpy.props.FloatProperty(
         description = "Insert duration in secondsi. -1 means any",
         default=-1,
         min=-1,
@@ -151,25 +151,25 @@ class Freesound_Search(bpy.types.Operator):
         addon_data = context.scene.freesound_data
         addon_data.freesound_loading = True
         try:
-            int(addon_data.duration_start)
+            int(addon_data.duration_from)
         except:
-            addon_data.duration_start = "-1"
+            addon_data.duration_from = "-1"
 
         try:
-            int(addon_data.duration_end)
+            int(addon_data.duration_to)
         except:
-            addon_data.duration_end = "-1"
+            addon_data.duration_to = "-1"
         
-        if (addon_data.duration_start == -1):
-            duration_start = "*"
+        if (addon_data.duration_from == -1):
+            duration_from = "*"
         else:
-            duration_start = str(addon_data.duration_start)
-        if (addon_data.duration_end == -1):
-            duration_end = "*"
+            duration_from = str(addon_data.duration_from)
+        if (addon_data.duration_to == -1):
+            duration_to = "*"
         else:
-            duration_end = str(addon_data.duration_end)
+            duration_to = str(addon_data.duration_to)
 
-        duration = "duration:[" + duration_start + " TO " + duration_end + "]"
+        duration = "duration:[" + duration_from + " TO " + duration_to + "]"
 
         if (addon_data.license != 'ALL'):
             filter_string=duration + ' license:"' + addon_data.license + '"'
