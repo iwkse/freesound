@@ -48,13 +48,8 @@ class FreesoundPanel(bpy.types.Panel):
         addon_data = context.scene.freesound_data
         split = layout.split(percentage=0.8)
 
+        if (addon_data.freesound_access == True):
 
-        if (addon_data.freesound_access):
-            split.prop(
-                addon_data,
-                "freesound_api",
-                text="Api Key")
-            split.operator("freesound.connect", text='Connect', icon='PLUGIN')
             split2 = layout.split(percentage=0.8)
             split2.prop(
                 addon_data,

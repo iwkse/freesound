@@ -32,6 +32,7 @@ class FreeSoundItem(bpy.types.PropertyGroup):
 # Definess one instance of the addon data (one per scene)
 class FreeSoundData(bpy.types.PropertyGroup):
     freesound_api = bpy.props.StringProperty(
+        subtype='PASSWORD',
         name="Api key",
         description="Your freesound API Key.",
         default="Get it here http://www.freesound.org/apiv2/apply/"
@@ -105,6 +106,7 @@ class Freesound_Connect(bpy.types.Operator):
         s = self.client.check_access()
         if (s):
             addon_data.freesound_access = True
+            Freesound_Connect.bl_label = 'Disconnect'
             return {'FINISHED'}
         else:
             addon_data.freesound_access = False
