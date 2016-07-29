@@ -44,11 +44,12 @@ class FreesoundPanel(bpy.types.Panel):
         sce = context.scene
 
         frame_current = sce.frame_current
-        freesound_api = context.scene.freesound_data.freesound_api
         addon_data = context.scene.freesound_data
         split = layout.split(percentage=0.8)
+        addon_prefs =  bpy.context.user_preferences.addons[__package__].preferences
 
-        if (addon_data.freesound_access == True):
+
+        if (addon_prefs.freesound_access == True):
 
             split2 = layout.split(percentage=0.8)
             split2.prop(
@@ -64,21 +65,21 @@ class FreesoundPanel(bpy.types.Panel):
             split3.prop(addon_data, "duration_to", "to")
             split3.prop(addon_data, "license")
             freesound_ptr = bpy.types.AnyType(bpy.context.scene.freesound_data)
-            split3 = layout.split(percentage=0.9)
+            split3 = layout.split(percentage=1)
             split3.template_list("FREESOUNDList", "", freesound_ptr, "freesound_list", freesound_ptr, "active_list_item", type='DEFAULT')
             col = split3.column(align=True)
-            if (addon_data.sound_is_playing):
-                col.operator("freesound.pause", icon='PAUSE')
-            else:
-                col.operator("freesound.play", icon='PLAY')
+       #     if (addon_data.sound_is_playing):
+       #         col.operator("freesound.pause", icon='PAUSE')
+       #     else:
+       #         col.operator("freesound.play", icon='PLAY')
 
-            col.operator("freesound.add", icon='ZOOMIN')
-            col.operator("freesound.prevpage", icon='PLAY_AUDIO')
-            col.operator("freesound.nextpage", icon='PLAY_AUDIO')
+       #     col.operator("freesound.add", icon='ZOOMIN')
+            row = layout.row()
 
-        else:
-            split.prop(
-                addon_data,
-                "freesound_api",
-                text="Api Key")
-            split.operator("freesound.connect", text='Validate', icon='PLUGIN')
+            row.operator("freesound.prevpage", icon='REW', text="")
+            row.operator("freesound.prevpage", icon='PREV_KEYFRAME', text="")
+            row.operator("freesound.prevpage", icon='PLAY_REVERSE', text="")
+            row.prop(addon_data, "duration_from", "pages")
+            row.operator("freesound.nextpage", icon='PLAY', text="")
+            row.operator("freesound.prevpage", icon='NEXT_KEYFRAME', text="")
+            row.operator("freesound.prevpage", icon='FF', text="")
