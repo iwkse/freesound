@@ -58,28 +58,73 @@ class FreesoundPanel(bpy.types.Panel):
                 text=""
             )
             split2.operator("freesound.search", text="Search", icon='VIEWZOOM')
-            row = layout.row()
+
             split3 = layout.split(percentage=0.1)
             split3.prop(addon_data, "high_quality")
             split3.prop(addon_data, "duration_from", "from")
             split3.prop(addon_data, "duration_to", "to")
             split3.prop(addon_data, "license")
             freesound_ptr = bpy.types.AnyType(bpy.context.scene.freesound_data)
-            split3 = layout.split(percentage=1)
-            split3.template_list("FREESOUNDList", "", freesound_ptr, "freesound_list", freesound_ptr, "active_list_item", type='DEFAULT')
-            col = split3.column(align=True)
-       #     if (addon_data.sound_is_playing):
-       #         col.operator("freesound.pause", icon='PAUSE')
-       #     else:
-       #         col.operator("freesound.play", icon='PLAY')
+            
+            row = layout.row()
+            col = row.column(align=True)
 
-       #     col.operator("freesound.add", icon='ZOOMIN')
+            if (addon_data.sound_is_playing):
+                col.operator("freesound.pause", text="", icon='MUTE_IPO_OFF')
+            else:
+                col.operator("freesound.play", text="", icon='MUTE_IPO_ON') 
+
+            col.operator("freesound.add", text="", icon='PLUS')
+            col.operator("freesound.info", text="", icon='INFO')
+            col = row.column(align=True)
+
+
+            col.template_list("FREESOUNDList", "", freesound_ptr, "freesound_list", freesound_ptr, "active_list_item")
+            
             row = layout.row()
 
             row.operator("freesound.prevpage", icon='REW', text="")
             row.operator("freesound.prevpage", icon='PREV_KEYFRAME', text="")
             row.operator("freesound.prevpage", icon='PLAY_REVERSE', text="")
-            row.prop(addon_data, "duration_from", "pages")
+            split = row.split(percentage=0.3)
+            split.prop(addon_data, "current_page", "pages")
+            try:
+                pages = int(addon_data.sounds/len(addon_data.freesound_list))
+                split.label(text="of     %s " % str(pages))
+            except:
+                split.label(text="of ...")
+            
+            val = [0,1,2,3,4]
+            point_star = 0
+            try:
+                point_star = addon_data.freesound_list[addon_data.active_list_item].avg_rating
+                print(addon_data.active_list_item)
+                print (point_star)
+            except:
+                print("freesound_list not defined")
+                print(point_star)
+                point_star = 0
+
+            
+            for l in val:
+                if (l < point_star):
+                    val [l] = 'SOLO_ON'
+                else:
+                    val[l] = 'SOLO_OFF'
+            
+            if (addon_data.freesound_list_loaded):
+                split = split.split(percentage=0.1)
+                split.label(text="",  icon=val[0])
+                split = split.split(percentage=0.1)
+                split.label(text="", icon=val[1])
+                split = split.split(percentage=0.1)
+                split.label(text="", icon=val[2])
+                split = split.split(percentage=0.1)
+                split.label(text="", icon=val[3])
+                split = split.split(percentage=0.1)
+                split.label(text="", icon=val[4])
+            
             row.operator("freesound.nextpage", icon='PLAY', text="")
             row.operator("freesound.prevpage", icon='NEXT_KEYFRAME', text="")
             row.operator("freesound.prevpage", icon='FF', text="")
+

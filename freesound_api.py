@@ -9,7 +9,6 @@ The client automatically maps function arguments to http parameters of the API. 
 
 Note that POST resources are not supported. Downloading full quality sounds requires Oauth2 authentication (see http://freesound.org/docs/api/authentication.html). Oauth2 authentication is supported, but you are expected to implement the workflow.
 """
-import bpy
 import os, re, json
 from collections import namedtuple
 
@@ -253,6 +252,8 @@ class Pager(FreesoundObject):
         Get a Pager with the previous results page.
         """
         return FSRequest.request(self.previous, {}, self.client, Pager)
+    def get_page(self, n):
+        return FSRequest.request(self.next, {'page': n}, self.client, Pager)
 
 class GenericPager(Pager):
     """
