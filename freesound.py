@@ -162,6 +162,15 @@ class FreeSoundData(bpy.types.PropertyGroup):
         min=-1,
         precision=1
     )
+    search_filter = bpy.props.EnumProperty(
+        items = [
+            ('rating_desc', 'Rating (Highest)', 'Rating (Highest)'),
+            ('rating_asc', 'Rating (Lowest)', 'Rating (Lowest)')
+        ],
+        name="",
+        default="rating_desc",
+        description="Order"
+    )
     license = bpy.props.EnumProperty(
         items = [
             ('ALL', 'All', 'All'),
@@ -319,7 +328,9 @@ class Freesound_Search(bpy.types.Operator):
             filter_string=duration + ' license:"' + addon_data.license + '"'
         else:
             filter_string=duration
-        Freesound_Search.results_pager = client.text_search(query=addon_data.search_item,filter=filter_string, sort="rating_desc",fields="id,name,previews,username,duration,avg_rating,num_ratings,comment,comments")
+
+        rating = addon_data.search_filter
+        Freesound_Search.results_pager = client.text_search(query=addon_data.search_item,filter=filter_string, sort=rating,fields="id,name,previews,username,duration,avg_rating,num_ratings,comment,comments")
         addon_data.freesound_list.clear()
         addon_data.sounds = Freesound_Search.results_pager.count
         for i in range(0, len(Freesound_Search.results_pager.results)):

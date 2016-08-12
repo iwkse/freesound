@@ -51,12 +51,13 @@ class FreesoundPanel(bpy.types.Panel):
 
         if (addon_prefs.freesound_access == True):
 
-            split2 = layout.split(percentage=0.8)
+            split2 = layout.split(percentage=0.6)
             split2.prop(
                 addon_data,
                 "search_item",
                 text=""
             )
+            split2.prop(addon_data, "search_filter")
             split2.operator("freesound.search", text="Search", icon='VIEWZOOM')
 
             split3 = layout.split(percentage=0.1)
@@ -98,11 +99,7 @@ class FreesoundPanel(bpy.types.Panel):
             point_star = 0
             try:
                 point_star = addon_data.freesound_list[addon_data.active_list_item].avg_rating
-                print(addon_data.active_list_item)
-                print (point_star)
             except:
-                print("freesound_list not defined")
-                print(point_star)
                 point_star = 0
 
             
