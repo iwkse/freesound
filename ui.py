@@ -51,19 +51,19 @@ class FreesoundPanel(bpy.types.Panel):
 
         if (addon_prefs.freesound_access == True):
 
-            split2 = layout.split(percentage=0.6)
+            split2 = layout.split(percentage=0.8)
             split2.prop(
                 addon_data,
                 "search_item",
                 text=""
             )
-            split2.prop(addon_data, "search_filter")
             split2.operator("freesound.search", text="Search", icon='VIEWZOOM')
 
             split3 = layout.split(percentage=0.1)
             split3.prop(addon_data, "high_quality")
             split3.prop(addon_data, "duration_from", "from")
             split3.prop(addon_data, "duration_to", "to")
+            split3.prop(addon_data, "search_filter")
             split3.prop(addon_data, "license")
             freesound_ptr = bpy.types.AnyType(bpy.context.scene.freesound_data)
             
@@ -84,16 +84,18 @@ class FreesoundPanel(bpy.types.Panel):
             
             row = layout.row()
 
-            row.operator("freesound.prevpage", icon='REW', text="")
-            row.operator("freesound.prevpage", icon='PREV_KEYFRAME', text="")
+            row.operator("freesound.firstpage", icon='REW', text="")
+            row.operator("freesound.prev10page", icon='PREV_KEYFRAME', text="")
             row.operator("freesound.prevpage", icon='PLAY_REVERSE', text="")
-            split = row.split(percentage=0.3)
-            split.prop(addon_data, "current_page", "pages")
+            split = row.split(percentage=0.5)
+            
+            split.prop(addon_data, "current_page", "Page")
+
             try:
                 pages = int(addon_data.sounds/len(addon_data.freesound_list))
                 split.label(text="of     %s " % str(pages))
             except:
-                split.label(text="of ...")
+                split.label(text="1 of ...")
             
             val = [0,1,2,3,4]
             point_star = 0
@@ -101,13 +103,15 @@ class FreesoundPanel(bpy.types.Panel):
                 point_star = addon_data.freesound_list[addon_data.active_list_item].avg_rating
             except:
                 point_star = 0
-
-            
             for l in val:
-                if (l < point_star):
-                    val [l] = 'SOLO_ON'
-                else:
-                    val[l] = 'SOLO_OFF'
+                if (l <= point_star-1):
+                    val[l] = 'SOLO_ON'
+                elif ((point_star % 1) > 0.5):
+                        val[l] = 'SPACE2'
+                elif ((point_star % 1) <= 0.5 and (point_star % 1) != 0):
+                        val[l] = 'MARKER_HLT'
+                elif ((point_star % 1) == 0):
+                        val[l] = 'SOLO_OFF'
             
             if (addon_data.freesound_list_loaded):
                 split = split.split(percentage=0.1)
@@ -122,6 +126,6 @@ class FreesoundPanel(bpy.types.Panel):
                 split.label(text="", icon=val[4])
             
             row.operator("freesound.nextpage", icon='PLAY', text="")
-            row.operator("freesound.prevpage", icon='NEXT_KEYFRAME', text="")
-            row.operator("freesound.prevpage", icon='FF', text="")
+            row.operator("freesound.next10page", icon='NEXT_KEYFRAME', text="")
+            row.operator("freesound.lastpage", icon='FF', text="")
 

@@ -12,14 +12,9 @@ Note that POST resources are not supported. Downloading full quality sounds requ
 import os, re, json
 from collections import namedtuple
 
-try: #python 3
-    from urllib.request import urlopen, FancyURLopener, Request
-    from urllib.parse import urlparse, urlencode, quote
-    from urllib.error import HTTPError
-except ImportError: #python 2.7
-    from urlparse import urlparse
-    from urllib import urlencode, FancyURLopener, quote
-    from urllib2 import HTTPError, urlopen, Request
+from urllib.request import urlopen, FancyURLopener, Request
+from urllib.parse import urlparse, urlencode, quote, parse_qs
+from urllib.error import HTTPError
 
 class URIS():
     HOST = 'www.freesound.org'
@@ -253,7 +248,21 @@ class Pager(FreesoundObject):
         """
         return FSRequest.request(self.previous, {}, self.client, Pager)
     def get_page(self, n):
-        return FSRequest.request(self.next, {'page': n}, self.client, Pager)
+        url = self.next
+        
+        uri = urlparse(url)
+        for index,item in enumerate(uri):
+            if ('query' in item):
+                urid=index
+
+        query = uri[urid].split("&")
+
+        for index,item in enumerate(query):
+            if ("page" in item):
+                query[index] = 'page=' + str(n)
+
+        url = uri[0] + '://' + uri[1] + uri[2] + '?' + "&".join(query)
+        return FSRequest.request(url, {}, self.client, Pager)
 
 class GenericPager(Pager):
     """
