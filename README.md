@@ -1,5 +1,5 @@
 # Freesound Add-on
-Blender Freesound add-on
+Blender Freesound add-on 1.0, Release of 22 August 2016
 
 This add-on allows you to browse, listen and insert sounds from the freesound.org archive in your Blender VSE.
 An API key is required: you can request it from http://freesound.org/apiv2/apply (Freesound login is required)
