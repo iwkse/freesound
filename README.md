@@ -12,12 +12,12 @@ To install the add-on, clone the GIT repository or download the zip and manually
 Before to start using the add-on you need to get an API key from freesound as decribed above. After this you insert the API and click on Validate button. If everything go fine you will see the button saying Validated as in the picture.
 
 ![Freesound Setup]
-(https://lh5.googleusercontent.com/B4bYNC3ixEeGr80ZtffshIG9zLZZ3VMTht2hXsvw1pOCqMsFU6TUl3J1SK-tShZra9_9vgQzsyGTXlU=w1917-h948)
+(https://ibin.co/2sbYj6Y7dZKT.jpg)
 
 Now you can save preferences so that the value is not lost.
 
 ![Freesound]
-(https://lh3.googleusercontent.com/z8nPgt4e_MnpZlrHSyBE31MHReQV1Giwz57rRbvIe-3YZ0i16yNXBoXt2piMJXoF6e9ck6nJcL7shlc=w1917-h948)
+(https://ibin.co/2sbZ1WdvTAOv.jpg)
 
 Using the add-on is straightforward and intuitive.
 All you have to do is search for some sounds and click on the Search button. You got further options for searching, HQ (High Quality Preview) allows you to download the best available preview at cost of download speed and disk space. 
