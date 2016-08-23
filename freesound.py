@@ -282,17 +282,16 @@ class Freesound_Validate(bpy.types.Operator):
 class Freesound_Info(bpy.types.Operator):
     bl_label = 'Info'
     bl_idname = 'freesound.info'
-    bl_description = 'Add sound to the VSE at current frame'
+    bl_description = 'Information about the user and sound'
     bl_options = {'REGISTER', 'UNDO'}
     def execute(self, context):
         try:
             addon_data = context.scene.freesound_data
             sound_id = FREESOUNDList.get_sound_id(FREESOUNDList)
-            sound_id.username
             client = Freesound_Validate.get_client(Freesound_Validate)
             sound_info = client.get_sound(sound_id)
             user = sound_info.username
-            url = 'https://www.freesound.org/people/'+ user  + '/sounds/'  + str(sound_info.id)
+            url = 'https://www.freesound.org/people/'+ user  + '/sounds/'  + str(sound_id)
             webbrowser.open(url)
         except:
             print ("File not found, search first")
