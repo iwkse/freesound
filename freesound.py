@@ -178,8 +178,9 @@ class FreeSoundData(bpy.types.PropertyGroup):
     )
     def update_max(self, context):
 
-        value = int(context.scene.freesound_data.sounds/len(context.scene.freesound_data.freesound_list)) 
-        if (value <= 0):
+        value = context.scene.freesound_data.current_page 
+        print (value)
+        if (value > 1):
             if (context.scene.freesound_data.current_page > value):
                 context.scene.freesound_data.current_page = value
             bpy.ops.freesound.current_page(context.scene.freesound_data.current_page)
@@ -393,7 +394,11 @@ class Freesound_Next(bpy.types.Operator):
 
     def execute(self, context):
         addon_data = context.scene.freesound_data
-        if (addon_data.current_page == int(addon_data.sounds/len(addon_data.freesound_list))):
+        try:
+            pages = int(addon_data.sounds/len/(addon_data.freesound_list))
+        except:
+            return {'FINISHED'}
+        if (addon_data.current_page == pages):
             return {'FINISHED'}
 
         if (addon_data.freesound_list_loaded):  
@@ -427,7 +432,11 @@ class Freesound_Next10(bpy.types.Operator):
 
     def execute(self, context):
         addon_data = context.scene.freesound_data
-        if (addon_data.current_page == int(addon_data.sounds/len(addon_data.freesound_list))):
+        try:
+            pages = int(addon_data.sounds/len/(addon_data.freesound_list))
+        except:
+            return {'FINISHED'}
+        if (addon_data.current_page == pages):
             return {'FINISHED'}
 
         if (addon_data.freesound_list_loaded):  
