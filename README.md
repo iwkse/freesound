@@ -13,7 +13,7 @@ To install the add-on, clone the GIT repository or download the zip and manually
 
 # Donations
 
-If this tool helped you and think is worth of some money and are willing to pay for it, feel free to send any amount through paypal or bitcoin, or dogecoin.
+If this tool helped you and think is worth of some money and are willing to pay for it, feel free to send any amount through paypal or bitcoin.
 
 | Paypal                                                                                                                                                   | Bitcoin                                                                                                                                          
 | ------                                                                                                                                                   | -------                                                                                                                                          | -------- |
