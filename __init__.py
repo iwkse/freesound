@@ -30,7 +30,7 @@ class ApiAddonPreferences(AddonPreferences):
     bl_idname = __package__
 
     freesound_api = bpy.props.StringProperty(
-#        subtype='PASSWORD',
+        subtype='PASSWORD',
         name="Insert your API Key",
         description="Your freesound API Key.",
         default="Get it here http://www.freesound.org/apiv2/apply/"

@@ -268,7 +268,6 @@ class Freesound_Validate(bpy.types.Operator):
     def execute(self, context):
         user_preferences = context.user_preferences
         addon_prefs = user_preferences.addons[__package__].preferences
-        print ("Validate: " + addon_prefs.freesound_api)
         self.client.set_token(addon_prefs.freesound_api)
         s = self.client.check_access()
         if (s):
