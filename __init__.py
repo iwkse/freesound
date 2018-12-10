@@ -50,8 +50,8 @@ class ApiAddonPreferences(AddonPreferences):
 bl_info = {
     "name": "Freesound",
     "author": "Salvatore De Paolis",
-    "version": (1, 0),
-    "blender": (2, 77, 1),
+    "version": (2, 0),
+    "blender": (2, 80, 0),
     "category": "Sequencer",
     "location": "Sequencer",
     "description": "Connect to freesound to list sounds",
@@ -65,14 +65,35 @@ if "bpy" in locals():
 else:
     from . import ui
 
+classes = (
+        ApiAddonPreferences,
+        FREESOUNDList,
+        Freesound_Play,
+        FreeSoundItem,
+        FreeSoundData,
+        Freesound_Page,
+        Freesound_Validate,
+        Freesound_Info,
+        Freesound_Add,
+        Freesound_Search,
+        Freesound_Next,
+        Freesound_Next10,
+        Freesound_Last,
+        Freesound_Prev,
+        Freesound_Prev10,
+        Freesound_First,
+        Freesound_Pause,
+)
 
 # Registration
 def register():
-    bpy.utils.register_module(__name__)
+    for cls in classes:
+        bpy.utils.register_class(cls)
 # Extend the scene class here to include the addon data
     bpy.types.Scene.freesound_data = bpy.props.PointerProperty(type=FreeSoundData)
 def unregister():
-    bpy.utils.unregister_module(__name__)
+    for cls in classes:
+        bpy.utils.unregister_class(cls)
 
 if __name__ == '__main__':
     register()
