@@ -20,7 +20,7 @@ import bpy
 from . import freesound_api
 from . import freesound
 
-class FreesoundPanel(bpy.types.Panel):
+class Freesound_Panel(bpy.types.Panel):
     """Creates a Panel in the Object properties window"""
     bl_label = "Freesound"
     bl_space_type = 'SEQUENCE_EDITOR'
