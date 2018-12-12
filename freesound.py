@@ -37,14 +37,14 @@ class FREESOUNDList(btypes.UIList):
         obj = active_data
         addon_data = context.scene.freesound_data
         sounds = addon_data.freesound_list
-        split=layout.split(percentage=0.5)
+        split=layout.split(factor=0.5, align=True)
         try:
             duration = str(datetime.timedelta(seconds=float(item.duration)))
         except:
             duration = "0"
-        split=layout.split(percentage=0.2)
-        split.label(duration)
-        split.label(item.name)
+        split=layout.split(factor=0.2, align=True)
+        split.label(text=duration)
+        split.label(text=item.name)
 
         FREESOUNDList.sound_id = addon_data.freesound_list[addon_data.active_list_item].sound_id
         FREESOUNDList.avg_rating = addon_data.freesound_list[addon_data.active_list_item].avg_rating

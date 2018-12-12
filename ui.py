@@ -17,10 +17,11 @@
 # ##### END GPL LICENSE BLOCK #####
 
 import bpy
+from bpy.types import Panel
 from . import freesound_api
 from . import freesound
 
-class Freesound_Panel(bpy.types.Panel):
+class Freesound_Panel(Panel):
     """Creates a Panel in the Object properties window"""
     bl_label = "Freesound"
     bl_space_type = 'SEQUENCE_EDITOR'
@@ -45,13 +46,13 @@ class Freesound_Panel(bpy.types.Panel):
 
         frame_current = sce.frame_current
         addon_data = context.scene.freesound_data
-        split = layout.split(percentage=0.8)
+        split = layout.split(factor=0.8, align=True)
         addon_prefs =  bpy.context.user_preferences.addons[__package__].preferences
 
 
         if (addon_prefs.freesound_access == True):
 
-            split2 = layout.split(percentage=0.8)
+            split2 = layout.split(factor=0.8, align=True)
             split2.prop(
                 addon_data,
                 "search_item",
@@ -59,10 +60,10 @@ class Freesound_Panel(bpy.types.Panel):
             )
             split2.operator("freesound.search", text="Search", icon='VIEWZOOM')
 
-            split3 = layout.split(percentage=0.1)
+            split3 = layout.split(factor=0.1, align=True)
             split3.prop(addon_data, "high_quality")
-            split3.prop(addon_data, "duration_from", "from")
-            split3.prop(addon_data, "duration_to", "to")
+            split3.prop(addon_data, "duration_from", text="from")
+            split3.prop(addon_data, "duration_to", text="to")
             split3.prop(addon_data, "search_filter")
             split3.prop(addon_data, "license")
             freesound_ptr = bpy.types.AnyType(bpy.context.scene.freesound_data)
@@ -87,9 +88,9 @@ class Freesound_Panel(bpy.types.Panel):
             row.operator("freesound.firstpage", icon='REW', text="")
             row.operator("freesound.prev10page", icon='PREV_KEYFRAME', text="")
             row.operator("freesound.prevpage", icon='PLAY_REVERSE', text="")
-            split = row.split(percentage=0.5)
+            split = row.split(factor=0.5, align=True)
             
-            split.prop(addon_data, "current_page", "Page")
+            split.prop(addon_data, "current_page", text="Page")
 
             try:
                 pages = int(addon_data.sounds/len(addon_data.freesound_list))
@@ -107,22 +108,22 @@ class Freesound_Panel(bpy.types.Panel):
                 if (l <= point_star-1):
                     val[l] = 'SOLO_ON'
                 elif ((point_star % 1) > 0.5):
-                        val[l] = 'SPACE2'
+                        val[l] = 'NONE'
                 elif ((point_star % 1) <= 0.5 and (point_star % 1) != 0):
                         val[l] = 'MARKER_HLT'
                 elif ((point_star % 1) == 0):
                         val[l] = 'SOLO_OFF'
             
             if (addon_data.freesound_list_loaded):
-                split = split.split(percentage=0.1)
+                split = split.split(factor=0.1, align=True)
                 split.label(text="",  icon=val[0])
-                split = split.split(percentage=0.1)
+                split = split.split(factor=0.1, align=True)
                 split.label(text="", icon=val[1])
-                split = split.split(percentage=0.1)
+                split = split.split(factor=0.1, align=True)
                 split.label(text="", icon=val[2])
-                split = split.split(percentage=0.1)
+                split = split.split(factor=0.1, align=True)
                 split.label(text="", icon=val[3])
-                split = split.split(percentage=0.1)
+                split = split.split(factor=0.1, align=True)
                 split.label(text="", icon=val[4])
             
             row.operator("freesound.nextpage", icon='PLAY', text="")
