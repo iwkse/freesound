@@ -9,7 +9,10 @@ The client automatically maps function arguments to http parameters of the API. 
 
 Note that POST resources are not supported. Downloading full quality sounds requires Oauth2 authentication (see http://freesound.org/docs/api/authentication.html). Oauth2 authentication is supported, but you are expected to implement the workflow.
 """
-import os, re, json
+
+import re
+import json
+from os.path import join
 from collections import namedtuple
 
 from urllib.request import urlopen, FancyURLopener, Request
@@ -46,7 +49,6 @@ class URIS():
     PACK_SOUNDS = '/packs/<pack_id>/sounds/'
     PACK_DOWNLOAD = '/packs/<pack_id>/download/'
 
-
     @classmethod
     def uri(cls, uri, *args):
         for a in args:
@@ -55,7 +57,8 @@ class URIS():
 
 class FreesoundClient():
     """
-    Start here, create a FreesoundClient and set an authentication token using set_token
+    Start here, create a FreesoundClient and set an authentication token 
+    using set_token
 
     >>> c = FreesoundClient()
 
@@ -87,8 +90,9 @@ class FreesoundClient():
 
     def text_search(self, **params):
         """
-        Search sounds using a text query and/or filter. Returns an iterable Pager object.
-        The fields parameter allows you to specify the information you want in the results list
+        Search sounds using a text query and/or filter. Returns an iterable 
+        Pager object. The fields parameter allows you to specify the information 
+        you want in the results list
         http://freesound.org/docs/api/resources_apiv2.html#text-search
 
         >>> sounds = c.text_search(query="dubstep", filter="tag:loop", fields="id,name,url")
@@ -198,7 +202,8 @@ class FSRequest:
     Makes requests to the freesound API. Should not be used directly.
     """
     @classmethod
-    def request(cls, uri, params={}, client=None, wrapper=FreesoundObject, method='GET',data=False):
+    def request(cls, uri, params={}, client=None, wrapper=FreesoundObject, 
+                method='GET',data=False):
         p = params if params else {}
         url = '%s?%s' % (uri, urlencode(p)) if params else uri
         d = urllib.urlencode(data) if data else None
@@ -211,7 +216,8 @@ class FSRequest:
             if e.code >= 200 and e.code < 300:
                 return resp
             else:
-                return FreesoundException(e.code, json.loads(resp.decode("utf-8")))
+                return FreesoundException(e.code, 
+                                          json.loads(resp.decode("utf-8")))
         resp = f.read()
         f.close()
         result = None
@@ -299,7 +305,7 @@ class Sound(FreesoundObject):
 
          >>> sound.retrieve("/tmp")
         """
-        path = os.path.join(directory, name if name else self.name)
+        path = join(directory, name if name else self.name)
         uri = URIS.uri(URIS.DOWNLOAD, self.id)
         return FSRequest.retrieve(uri, self.client,path)
 
@@ -310,10 +316,10 @@ class Sound(FreesoundObject):
         >>> sound.retrieve_preview("/tmp")
         """
         if (not quality):
-            path = os.path.join(directory, name if name else str(self.previews.preview_lq_mp3.split("/")[-1]))
+            path = join(directory, name if name else str(self.previews.preview_lq_mp3.split("/")[-1]))
             return FSRequest.retrieve(self.previews.preview_lq_mp3, self.client,path)
         else:
-            path = os.path.join(directory, name if name else str(self.previews.preview_hq_mp3.split("/")[-1]))
+            path = join(directory, name if name else str(self.previews.preview_hq_mp3.split("/")[-1]))
             return FSRequest.retrieve(self.previews.preview_hq_mp3, self.client,path)
 
     def get_analysis(self, descriptors=None):
