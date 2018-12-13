@@ -2,7 +2,8 @@ import bpy.types as btypes
 from bpy.props import BoolProperty, StringProperty, FloatProperty, \
                       EnumProperty, IntProperty, CollectionProperty
 import webbrowser
-import os.path
+from os.path import dirname, realpath, isfile
+from bpy import ops,context
 import datetime
 import aud
 from . import freesound_api
@@ -63,13 +64,14 @@ class Freesound_Play(btypes.Operator):
         addon_data = context.scene.freesound_data
 
         if (not addon_data.freesound_list_loaded):  
-            return {"FINISHED"}
+            return {'FINISHED'}
 
+        addon_data.sound_is_playing = True
+        client = Freesound_Validate.get_client(Freesound_Validate)
+        
         try:
-            addon_data.sound_is_playing = True
-            client = Freesound_Validate.get_client(Freesound_Validate)
-
             sound_id = FREESOUNDList.get_sound_id(FREESOUNDList)
+
             sound_info = client.get_sound(sound_id)
             if (addon_data.high_quality):
                 preview_file = str(sound_info.previews.preview_hq_mp3.split("/")[-1])
@@ -77,18 +79,22 @@ class Freesound_Play(btypes.Operator):
                 preview_file = str(sound_info.previews.preview_lq_mp3.split("/")[-1])
 
             if (preview_file):
-                if (os.path.isfile(os.path.dirname(os.path.realpath(__file__)) + '/' + preview_file)):
-                    soundfile = os.path.dirname(os.path.realpath(__file__)) + '/' + preview_file
+                if (isfile(dirname(realpath(__file__)) + '/' + preview_file)):
+                    soundfile = dirname(realpath(__file__)) + '/' + preview_file
                 else:
-                    res = sound_info.retrieve_preview(os.path.dirname(os.path.realpath(__file__)), addon_data.high_quality)
+                    res = sound_info.retrieve_preview(dirname(realpath(__file__)),\
+                                                    addon_data.high_quality)
                     soundfile = res[0]
                 addon_data.soundfile = soundfile
-                device = aud.device()
-                factory = aud.Factory(soundfile)
-                Freesound_Play.handle = device.play(factory)
-                Freesound_Play.handle.loop_count = -1
+
+            device = aud.Device()
+            sound = aud.Sound.file(soundfile)
+            Freesound_Play.handle = device.play(sound)
+            Freesound_Play.handle.loop_count = -1
         except:
-            print ("File not found, search first")
+            print("[Play] Search something first...")
+            return {'CANCELLED'}
+
         return {'FINISHED'}
 
 
@@ -148,7 +154,7 @@ class FreeSoundData(btypes.PropertyGroup):
         if (value > 1):
             if (context.scene.freesound_data.current_page > value):
                 context.scene.freesound_data.current_page = value
-            bpy.ops.freesound.current_page(context.scene.freesound_data.current_page)
+            ops.freesound.current_page(context.scene.freesound_data.current_page)
         return None
 
     high_quality : BoolProperty(
@@ -206,7 +212,7 @@ class FreeSoundData(btypes.PropertyGroup):
     soundfile : StringProperty(
         name="Sound Path",
         description="Path to the file",
-        default=os.path.dirname(os.path.realpath(__file__))
+        default=dirname(realpath(__file__))
     )
     sound_is_playing : BoolProperty(
         description = 'Sound is playing'
@@ -298,7 +304,7 @@ class Freesound_Info(btypes.Operator):
             url = 'https://www.freesound.org/people/'+ user  + '/sounds/'  + str(sound_id)
             webbrowser.open(url)
         except:
-            print ("File not found, search first")
+            print ("[Info] Search something first...")
         
         return {'FINISHED'}
 # Freesound Add
@@ -308,8 +314,8 @@ class Freesound_Add(btypes.Operator):
     bl_description = 'Add sound to the VSE at current frame'
     bl_options = {'REGISTER', 'UNDO'}
     def execute(self, context):
+        addon_data = context.scene.freesound_data
         try:
-            addon_data = context.scene.freesound_data
             sound_id = FREESOUNDList.get_sound_id(FREESOUNDList)
             client = Freesound_Validate.get_client(Freesound_Validate)
             sound_info = client.get_sound(sound_id)
@@ -318,15 +324,18 @@ class Freesound_Add(btypes.Operator):
             else:
                 preview_file = str(sound_info.previews.preview_lq_mp3.split("/")[-1])
             
-            if (os.path.isfile(os.path.dirname(os.path.realpath(__file__)) + '/' + preview_file)):
-                soundfile = os.path.dirname(os.path.realpath(__file__)) + '/' + preview_file
+            if (isfile(dirname(realpath(__file__)) + '/' + preview_file)):
+                soundfile = dirname(realpath(__file__)) + '/' + preview_file
             else:
-                res = sound_info.retrieve_preview(os.path.dirname(os.path.realpath(__file__)), addon_data.high_quality)
+                res = sound_info.retrieve_preview(dirname(realpath(__file__)),\
+                                                    addon_data.high_quality)
                 soundfile = res[0]
             addon_data.soundfile = soundfile
-            bpy.ops.sequencer.sound_strip_add(filepath=addon_data.soundfile, frame_start=bpy.context.scene.frame_current)
+            ops.sequencer.sound_strip_add(filepath=addon_data.soundfile, \
+                                        frame_start=context.scene.frame_current)
         except:
-            print ("File not found, search first")
+            print("[Add] Search something first...")
+            return {'CANCELLED'}
 
         return {'FINISHED'}
     
@@ -342,7 +351,7 @@ class Freesound_Search(btypes.Operator):
         client = Freesound_Validate.get_client(Freesound_Validate)
         
         if (not client.token):
-            bpy.ops.freesound.validate()
+            ops.freesound.validate()
 
         addon_data = context.scene.freesound_data
         addon_data.freesound_loading = True
