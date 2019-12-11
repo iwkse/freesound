@@ -103,7 +103,7 @@ class Freesound_Panel(Panel):
             col.separator()
             col.operator("freesound.info", text="", icon='URL')
             col.separator()
-            col.operator("freesound.add", text="", icon='SEQ_SEQUENCER')
+            col.operator("freesound.add", text="", icon='NLA_PUSHDOWN')
 
             col_list.prop(addon_data, "high_quality", text="Use High Quality File")
 
@@ -119,9 +119,9 @@ class Freesound_Panel(Panel):
                 if (l <= point_star-1):
                     val[l] = 'SOLO_ON'
                 elif ((point_star % 1) > 0.5):
-                        val[l] = 'NONE'
+                        val[l] = 'SOLO_OFF'
                 elif ((point_star % 1) <= 0.5 and (point_star % 1) != 0):
-                        val[l] = 'MARKER_HLT'
+                        val[l] = 'SORTBYEXT'
                 elif ((point_star % 1) == 0):
                         val[l] = 'SOLO_OFF'
 
