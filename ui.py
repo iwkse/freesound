@@ -79,7 +79,7 @@ class Freesound_Panel(Panel):
                 row.label(text="1 of ...")
 
             freesound_ptr = bpy.types.AnyType(bpy.context.scene.freesound_data)
-            
+
             row = layout.row(align=True)
             col = row.column(align=True)
             col.template_list("FREESOUNDList", "", freesound_ptr, "freesound_list", freesound_ptr, "active_list_item")
@@ -89,7 +89,7 @@ class Freesound_Panel(Panel):
             if (addon_data.sound_is_playing):
                 col.operator("freesound.pause", text="", icon='PAUSE')
             else:
-                col.operator("freesound.play", text="", icon='PLAY') 
+                col.operator("freesound.play", text="", icon='PLAY')
 
             col.operator("freesound.info", text="", icon='URL')
             col.operator("freesound.firstpage", icon='REW', text="")
@@ -125,7 +125,7 @@ class Freesound_Panel(Panel):
                         val[l] = 'MARKER_HLT'
                 elif ((point_star % 1) == 0):
                         val[l] = 'SOLO_OFF'
-            
+
             if (addon_data.freesound_list_loaded):
                 row = row.split(factor=0.1, align=True)
                 row.label(text="", icon=val[0])
@@ -137,7 +137,7 @@ class Freesound_Panel(Panel):
                 row.label(text="", icon=val[3])
                 row = row.split(factor=0.1, align=True)
                 row.label(text="", icon=val[4])
-            
+
             layout.prop(addon_data, "high_quality", text="High Quality File")
             col = layout.column(align=True)
             col.prop(addon_data, "duration_from", text="Duration From")

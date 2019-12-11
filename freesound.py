@@ -63,12 +63,12 @@ class Freesound_Play(btypes.Operator):
     def execute(self, context):
         addon_data = context.scene.freesound_data
 
-        if (not addon_data.freesound_list_loaded):  
+        if (not addon_data.freesound_list_loaded):
             return {'FINISHED'}
 
         addon_data.sound_is_playing = True
         client = Freesound_Validate.get_client(Freesound_Validate)
-        
+
         try:
             sound_id = FREESOUNDList.get_sound_id(FREESOUNDList)
 
@@ -149,7 +149,7 @@ class FreeSoundItem(btypes.PropertyGroup):
 class FreeSoundData(btypes.PropertyGroup):
     def update_max(self, context):
 
-        value = context.scene.freesound_data.current_page 
+        value = context.scene.freesound_data.current_page
         print (value)
         if (value > 1):
             if (context.scene.freesound_data.current_page > value):
@@ -233,7 +233,7 @@ class FreeSoundData(btypes.PropertyGroup):
     active_list_item : IntProperty()
     freesound_list : CollectionProperty(type=FreeSoundItem)
     freesound_list_loaded : BoolProperty()
-    
+
 
 class Freesound_Page(btypes.Operator):
     bl_label = "Jump to Page"
@@ -305,7 +305,7 @@ class Freesound_Info(btypes.Operator):
             webbrowser.open(url)
         except:
             print ("[Info] Search something first...")
-        
+
         return {'FINISHED'}
 # Freesound Add
 class Freesound_Add(btypes.Operator):
@@ -323,7 +323,7 @@ class Freesound_Add(btypes.Operator):
                 preview_file = str(sound_info.previews.preview_hq_mp3.split("/")[-1])
             else:
                 preview_file = str(sound_info.previews.preview_lq_mp3.split("/")[-1])
-            
+
             if (isfile(dirname(realpath(__file__)) + '/' + preview_file)):
                 soundfile = dirname(realpath(__file__)) + '/' + preview_file
             else:
@@ -338,7 +338,7 @@ class Freesound_Add(btypes.Operator):
             return {'CANCELLED'}
 
         return {'FINISHED'}
-    
+
 # Freesound Search
 class Freesound_Search(btypes.Operator):
     bl_label = 'Search'
@@ -349,7 +349,7 @@ class Freesound_Search(btypes.Operator):
     def execute(self, context):
         addon_prefs = context.preferences.addons[__package__].preferences
         client = Freesound_Validate.get_client(Freesound_Validate)
-        
+
         if (not client.token):
             ops.freesound.validate()
 
@@ -364,7 +364,7 @@ class Freesound_Search(btypes.Operator):
             int(addon_data.duration_to)
         except:
             addon_data.duration_to = "-1"
-        
+
         if (addon_data.duration_from == -1):
             duration_from = "*"
         else:
@@ -419,7 +419,7 @@ class Freesound_Next(btypes.Operator):
         if (addon_data.current_page > pages):
             return {'FINISHED'}
 
-        if (addon_data.freesound_list_loaded):  
+        if (addon_data.freesound_list_loaded):
             results_pager = Freesound_Search.results_pager
 
             if (addon_data.current_page < pages):
@@ -434,9 +434,9 @@ class Freesound_Next(btypes.Operator):
                     _sound.avg_rating = sound.avg_rating
                     _sound.duration = str(sound.duration)
                     _sound.author = str(sound.username)
-                
-                addon_data.current_page += 1 
-                
+
+                addon_data.current_page += 1
+
         return {'FINISHED'}
 
 # Freesound Next 10 pages search
@@ -459,7 +459,7 @@ class Freesound_Next10(btypes.Operator):
             addon_data.current_page -= 10
             return {'FINISHED'}
 
-        if (addon_data.freesound_list_loaded):  
+        if (addon_data.freesound_list_loaded):
             results_pager = Freesound_Search.results_pager
             if (addon_data.current_page < pages):
                 addon_data.freesound_list.clear()
@@ -484,7 +484,7 @@ class Freesound_Last(btypes.Operator):
 
     def execute(self, context):
         addon_data = context.scene.freesound_data
-        if (addon_data.freesound_list_loaded):  
+        if (addon_data.freesound_list_loaded):
             results_pager = Freesound_Search.results_pager
             addon_data.pager_num = int(addon_data.sounds/len(addon_data.freesound_list))
 
@@ -517,9 +517,9 @@ class Freesound_Prev(btypes.Operator):
             addon_data.current_page = 1
             return {'FINISHED'}
 
-        if (addon_data.freesound_list_loaded):  
+        if (addon_data.freesound_list_loaded):
             results_pager = Freesound_Search.results_pager
-            
+
             addon_data.freesound_list.clear()
             Freesound_Search.results_pager = results_pager.previous_page()
 
@@ -531,7 +531,7 @@ class Freesound_Prev(btypes.Operator):
                 _sound.avg_rating = sound.avg_rating
                 _sound.duration = str(sound.duration)
                 _sound.author = sound.username
-            addon_data.current_page -= 1 
+            addon_data.current_page -= 1
         return {'FINISHED'}
 
 # Freesound Prev 10 pages search
@@ -547,9 +547,9 @@ class Freesound_Prev10(btypes.Operator):
         if (cur_page <= 0):
             addon_data.current_page = 1
             return {'FINISHED'}
-        if (addon_data.freesound_list_loaded):  
+        if (addon_data.freesound_list_loaded):
             results_pager = Freesound_Search.results_pager
-            
+
             addon_data.freesound_list.clear()
             Freesound_Search.results_pager = results_pager.get_page(addon_data.current_page - 10)
 
@@ -561,7 +561,7 @@ class Freesound_Prev10(btypes.Operator):
                 _sound.avg_rating = sound.avg_rating
                 _sound.duration = str(sound.duration)
                 _sound.author = str(sound.username)
-            addon_data.current_page -= 10 
+            addon_data.current_page -= 10
         return {'FINISHED'}
 
 # Freesound First page search
@@ -573,7 +573,7 @@ class Freesound_First(btypes.Operator):
 
     def execute(self, context):
         addon_data = context.scene.freesound_data
-        if (addon_data.freesound_list_loaded):  
+        if (addon_data.freesound_list_loaded):
             results_pager = Freesound_Search.results_pager
             addon_data.pager_num = int(addon_data.sounds/len(addon_data.freesound_list))
 
@@ -600,7 +600,7 @@ class Freesound_Pause(btypes.Operator):
     handle = 0
     def execute(self, context):
         addon_data = context.scene.freesound_data
-        if (addon_data.freesound_list_loaded):  
+        if (addon_data.freesound_list_loaded):
             addon_data.sound_is_playing = False
             Freesound_Play.handle.stop()
         return {'FINISHED'}
