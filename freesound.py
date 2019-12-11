@@ -179,11 +179,14 @@ class FreeSoundData(btypes.PropertyGroup):
     )
     search_filter: EnumProperty(
         items = [
+            ('score_desc', 'Automatic by relevance', 'Automatic by relevance'),
             ('rating_desc', 'Rating (Highest)', 'Rating (Highest)'),
-            ('rating_asc', 'Rating (Lowest)', 'Rating (Lowest)')
+            ('rating_asc', 'Rating (Lowest)', 'Rating (Lowest)'),
+            ('duration_desc', 'Duration (long first)', 'Duration (long first)'),
+            ('duration_asc', 'Duration (short first)', 'Duration (short first)')
         ],
         name="",
-        default="rating_desc",
+        default="score_desc",
         description="Order"
     )
     license: EnumProperty(
