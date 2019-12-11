@@ -57,20 +57,30 @@ class Freesound_Panel(Panel):
 
             col = layout.column(align=True)
 
+            col.prop(addon_data, "license", text="License")
+            col.prop(addon_data, "search_filter", text="Filter")
+            col = col.column(align=True)
+            col.prop(addon_data, "duration_from", text="Duration Minimum")
+            col.prop(addon_data, "duration_to", text="Maximum")
+
             split2 = col.row(align=True)
             split2.prop(
                 addon_data,
                 "search_item",
-                text=""
+                text="Search"
             )
             split2.operator("freesound.search", text="", icon='VIEWZOOM')
 
-            col.prop(addon_data, "license", text="Licence")
-            col.prop(addon_data, "search_filter", text="Search Filter")
-
-            row = layout.row()
-            row.alignment = 'RIGHT'
-            row.prop(addon_data, "current_page", text="List Page")
+            col = layout.box()
+            col_list = col.column(align=True)
+            row = col_list.row(align=True)
+            row.alignment = 'CENTER'
+            row.label(text="List Page")
+            row.operator("freesound.firstpage", icon='REW', text="")
+            row.operator("freesound.prev10page", icon='TRIA_LEFT', text="")
+            row.prop(addon_data, "current_page", text="")
+            row.operator("freesound.next10page", icon='TRIA_RIGHT', text="")
+            row.operator("freesound.lastpage", icon='FF', text="")
 
             try:
                 pages = int(addon_data.sounds/len(addon_data.freesound_list))
@@ -80,7 +90,7 @@ class Freesound_Panel(Panel):
 
             freesound_ptr = bpy.types.AnyType(bpy.context.scene.freesound_data)
 
-            row = layout.row(align=True)
+            row = col_list.row(align=True)
             col = row.column(align=True)
             col.template_list("FREESOUNDList", "", freesound_ptr, "freesound_list", freesound_ptr, "active_list_item")
 
@@ -90,25 +100,14 @@ class Freesound_Panel(Panel):
                 col.operator("freesound.pause", text="", icon='PAUSE')
             else:
                 col.operator("freesound.play", text="", icon='PLAY')
-
+            col.separator()
             col.operator("freesound.info", text="", icon='URL')
-            col.operator("freesound.firstpage", icon='REW', text="")
-            col.operator("freesound.prev10page", icon='TRIA_LEFT', text="")
-            col.operator("freesound.next10page", icon='TRIA_RIGHT', text="")
-            col.operator("freesound.lastpage", icon='FF', text="")
+            col.separator()
+            col.operator("freesound.add", text="", icon='SEQ_SEQUENCER')
 
-            row = layout.box()
-            col = row.column(align=True)
+            col_list.prop(addon_data, "high_quality", text="Use High Quality File")
 
-            row = col.row()
-            row.alignment = 'RIGHT'
-            try:
-                duration = addon_data.freesound_list[addon_data.active_list_item].duration
-            except:
-                duration = 0
-            row.label(text="Duration  "+str(datetime.timedelta(seconds=float(duration))))
-
-            row = col.row()
+            row = col_list.row(align=True)
             row.alignment = 'RIGHT'
             val = [0,1,2,3,4]
             point_star = 0
@@ -127,19 +126,30 @@ class Freesound_Panel(Panel):
                         val[l] = 'SOLO_OFF'
 
             if (addon_data.freesound_list_loaded):
-                row = row.split(factor=0.1, align=True)
+                try:
+                    num_ratings = addon_data.freesound_list[addon_data.active_list_item].num_ratings
+                except:
+                    num_ratings = 0
+                row.label(text="Rating ")
                 row.label(text="", icon=val[0])
-                row = row.split(factor=0.1, align=True)
                 row.label(text="", icon=val[1])
-                row = row.split(factor=0.1, align=True)
                 row.label(text="", icon=val[2])
-                row = row.split(factor=0.1, align=True)
                 row.label(text="", icon=val[3])
-                row = row.split(factor=0.1, align=True)
                 row.label(text="", icon=val[4])
 
-            layout.prop(addon_data, "high_quality", text="High Quality File")
-            col = layout.column(align=True)
-            col.prop(addon_data, "duration_from", text="Duration From")
-            col.prop(addon_data, "duration_to", text="To")
-            layout.operator("freesound.add", text="Add", icon='PLUS')
+            row = col_list.row()
+            row.alignment = 'RIGHT'
+            try:
+                duration = addon_data.freesound_list[addon_data.active_list_item].duration
+            except:
+                duration = 0
+            row.label(text="Duration  "+str(bpy.utils.smpte_from_seconds(time=float(duration))))
+
+            row = col_list.row()
+            row.alignment = 'RIGHT'
+
+            try:
+                author = addon_data.freesound_list[addon_data.active_list_item].author
+            except:
+                author = "Unknown"
+            row.label(text="Author  "+author)

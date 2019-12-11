@@ -1,3 +1,5 @@
+import os
+import bpy
 import bpy.types as btypes
 from bpy.props import BoolProperty, StringProperty, FloatProperty, \
                       EnumProperty, IntProperty, CollectionProperty
@@ -99,44 +101,44 @@ class Freesound_Play(btypes.Operator):
 
 
 class FreeSoundItem(btypes.PropertyGroup):
-    sound_id : StringProperty(
+    sound_id: StringProperty(
         name="Sound ID",
         description="The ID of this sound",
         default="0"
     )
-    avg_rating : FloatProperty(
+    avg_rating: FloatProperty(
         name="Average Rating",
         description="Numerical average rating",
         default=0
     )
-    num_ratings : StringProperty(
+    num_ratings: StringProperty(
         name="Number of Ratings",
         description="Ratings",
         default="0"
     )
-    comment : StringProperty(
+    comment: StringProperty(
         name="Comment",
         description="Comment",
         default="0"
     )
-    comments : StringProperty(
+    comments: StringProperty(
         name="Comments",
         description="Comments",
         default="0"
     )
-    play : BoolProperty()
+    play: BoolProperty()
     add : BoolProperty()
     duration : StringProperty(
         name="Sound Duration",
         description="Duration of sound",
         default="NaN"
     )
-    name : StringProperty(
+    name: StringProperty(
         name="Sound name",
         description="The name of this sound",
         default="Name"
     )
-    author : StringProperty(
+    author: StringProperty(
         name="Author",
         description="The author of this sound",
         default="Author"
@@ -145,6 +147,8 @@ class FreeSoundItem(btypes.PropertyGroup):
     @classmethod
     def poll(cls, context):
         return context.scene.freesound_data.active_list_item
+
+
 # Definess one instance of the addon data (one per scene)
 class FreeSoundData(btypes.PropertyGroup):
     def update_max(self, context):
@@ -157,23 +161,23 @@ class FreeSoundData(btypes.PropertyGroup):
             ops.freesound.current_page(context.scene.freesound_data.current_page)
         return None
 
-    high_quality : BoolProperty(
+    high_quality: BoolProperty(
         name="HQ",
         description="Best quality play and add for non-oauth2"
     )
-    duration_from : FloatProperty(
+    duration_from: FloatProperty(
         description = "Insert duration in seconds. -1 means any",
         default=-1,
         min=-1,
         precision=1
     )
-    duration_to : FloatProperty(
-        description = "Insert duration in secondsi. -1 means any",
+    duration_to: FloatProperty(
+        description = "Insert duration in seconds. -1 means any",
         default=-1,
         min=-1,
         precision=1
     )
-    search_filter : EnumProperty(
+    search_filter: EnumProperty(
         items = [
             ('rating_desc', 'Rating (Highest)', 'Rating (Highest)'),
             ('rating_asc', 'Rating (Lowest)', 'Rating (Lowest)')
@@ -182,7 +186,7 @@ class FreeSoundData(btypes.PropertyGroup):
         default="rating_desc",
         description="Order"
     )
-    license : EnumProperty(
+    license: EnumProperty(
         items = [
             ('ALL', 'All', 'All'),
             ('Attribution', 'Attribution', 'Attribution'),
@@ -195,44 +199,44 @@ class FreeSoundData(btypes.PropertyGroup):
         description="The type of license"
     )
 
-    current_page : IntProperty(
+    current_page: IntProperty(
         description = "Current Pager",
         default=1,
         min=1,
         update=update_max
     )
-    pager_num : IntProperty(
+    pager_num: IntProperty(
         description = "Current pager",
         default = 0
     )
-    sounds : IntProperty(
+    sounds: IntProperty(
         description = "Number of sounds",
         default = 0
     )
-    soundfile : StringProperty(
+    soundfile: StringProperty(
         name="Sound Path",
         description="Path to the file",
         default=dirname(realpath(__file__))
     )
-    sound_is_playing : BoolProperty(
+    sound_is_playing: BoolProperty(
         description = 'Sound is playing'
     )
-    freesound_loading : BoolProperty(
+    freesound_loading: BoolProperty(
         description = 'Loading'
     )
-    freesound_access : BoolProperty(
+    freesound_access: BoolProperty(
         description=(
             'Access to Freesound API'
         )
     )
-    search_item : StringProperty(
+    search_item: StringProperty(
         description=(
             'Sound to search'
         )
     )
-    active_list_item : IntProperty()
-    freesound_list : CollectionProperty(type=FreeSoundItem)
-    freesound_list_loaded : BoolProperty()
+    active_list_item: IntProperty()
+    freesound_list: CollectionProperty(type=FreeSoundItem)
+    freesound_list_loaded: BoolProperty()
 
 
 class Freesound_Page(btypes.Operator):
@@ -315,27 +319,47 @@ class Freesound_Add(btypes.Operator):
     bl_options = {'REGISTER', 'UNDO'}
     def execute(self, context):
         addon_data = context.scene.freesound_data
-        try:
-            sound_id = FREESOUNDList.get_sound_id(FREESOUNDList)
-            client = Freesound_Validate.get_client(Freesound_Validate)
-            sound_info = client.get_sound(sound_id)
-            if (addon_data.high_quality):
-                preview_file = str(sound_info.previews.preview_hq_mp3.split("/")[-1])
-            else:
-                preview_file = str(sound_info.previews.preview_lq_mp3.split("/")[-1])
+        #try:
+        sound_id = FREESOUNDList.get_sound_id(FREESOUNDList)
+        client = Freesound_Validate.get_client(Freesound_Validate)
+        sound_info = client.get_sound(sound_id)
+        if (addon_data.high_quality):
+            preview_file = str(sound_info.previews.preview_hq_mp3.split("/")[-1])
+        else:
+            preview_file = str(sound_info.previews.preview_lq_mp3.split("/")[-1])
 
-            if (isfile(dirname(realpath(__file__)) + '/' + preview_file)):
-                soundfile = dirname(realpath(__file__)) + '/' + preview_file
-            else:
-                res = sound_info.retrieve_preview(dirname(realpath(__file__)),\
-                                                    addon_data.high_quality)
-                soundfile = res[0]
-            addon_data.soundfile = soundfile
-            ops.sequencer.sound_strip_add(filepath=addon_data.soundfile, \
-                                        frame_start=context.scene.frame_current)
-        except:
-            print("[Add] Search something first...")
-            return {'CANCELLED'}
+        if (isfile(dirname(realpath(__file__)) + '/' + preview_file)):
+            soundfile = dirname(realpath(__file__)) + '/' + preview_file
+        else:
+            res = sound_info.retrieve_preview(dirname(realpath(__file__)),\
+                                                addon_data.high_quality)
+            soundfile = res[0]
+        addon_data.soundfile = soundfile
+
+        if not bpy.context.scene.sequence_editor:
+            bpy.context.scene.sequence_editor_create()
+        scn = bpy.context.scene
+        seq = scn.sequence_editor
+        cf = scn.frame_current
+        sequences = bpy.context.sequences
+
+        if not sequences:
+            addSceneChannel = 1
+        else:
+            channels = [s.channel for s in sequences]
+            channels = sorted(list(set(channels)))
+            empty_channel = channels[-1] + 1
+            addSceneChannel = empty_channel
+
+        name = os.path.basename(addon_data.soundfile)
+        newStrip = seq.sequences.new_sound(name=name, filepath=addon_data.soundfile, \
+                                    channel=addSceneChannel, frame_start=cf)
+
+        seq.sequences_all[newStrip.name].frame_start = cf
+
+        # except:
+        #     print("[Add] Search something first...")
+        #     return {'CANCELLED'}
 
         return {'FINISHED'}
 
@@ -399,6 +423,7 @@ class Freesound_Search(btypes.Operator):
             _sound.author = sound.username
 
         addon_data.freesound_list_loaded = True
+        bpy.ops.freesound.firstpage()
         return {'FINISHED'}
     def get_results_pager(self):
         return self.results_pager
