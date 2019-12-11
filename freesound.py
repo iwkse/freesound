@@ -38,14 +38,14 @@ class FREESOUNDList(btypes.UIList):
         obj = active_data
         addon_data = context.scene.freesound_data
         sounds = addon_data.freesound_list
-        split=layout.split(factor=0.5, align=True)
-        try:
-            duration = str(datetime.timedelta(seconds=float(item.duration)))
-        except:
-            duration = "0"
-        split=layout.split(factor=0.2, align=True)
-        split.label(text=duration)
-        split.label(text=item.name)
+        # split=layout.split(factor=0.5, align=True)
+        # try:
+        #     duration = str(datetime.timedelta(seconds=float(item.duration)))
+        # except:
+        #     duration = "0"
+        # split=layout.split(factor=0.2, align=True)
+        # split.label(text=duration)
+        layout.label(text=item.name)
 
         FREESOUNDList.sound_id = addon_data.freesound_list[addon_data.active_list_item].sound_id
         FREESOUNDList.avg_rating = addon_data.freesound_list[addon_data.active_list_item].avg_rating
@@ -277,8 +277,8 @@ class Freesound_Validate(btypes.Operator):
     def get_client(self):
         return self.client
     def execute(self, context):
-        user_preferences = context.user_preferences
-        addon_prefs = user_preferences.addons[__package__].preferences
+        preferences = context.preferences
+        addon_prefs = preferences.addons[__package__].preferences
         self.client.set_token(addon_prefs.freesound_api)
         s = self.client.check_access()
         if (s):
@@ -347,7 +347,7 @@ class Freesound_Search(btypes.Operator):
     bl_options = {'REGISTER', 'UNDO'}
     results_pager = 0
     def execute(self, context):
-        addon_prefs = context.user_preferences.addons[__package__].preferences
+        addon_prefs = context.preferences.addons[__package__].preferences
         client = Freesound_Validate.get_client(Freesound_Validate)
         
         if (not client.token):
