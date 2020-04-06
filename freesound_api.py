@@ -12,10 +12,11 @@ Note that POST resources are not supported. Downloading full quality sounds requ
 
 import re
 import json
+import ssl
 from os.path import join
 from collections import namedtuple
-
-from urllib.request import urlopen, FancyURLopener, Request
+import requests
+from urllib.request import urlopen, Request
 from urllib.parse import urlparse, urlencode, quote, parse_qs
 from urllib.error import HTTPError
 
@@ -185,32 +186,24 @@ class FreesoundException(Exception):
         return '<FreesoundException: code=%s, detail="%s">' % \
                 (self.code,  self.detail)
 
-class Retriever(FancyURLopener):
-    """
-    Downloads previews and original sound files to disk.
-    """
-    def http_error_default(self, url, fp, errcode, errmsg, headers):
-        resp = fp.read()
-        try:
-            error = json.loads(resp.decode("utf-8"))
-            raise FreesoundException(errcode,resp.detail)
-        except:
-            raise Exception(resp)
-
 class FSRequest:
     """
     Makes requests to the freesound API. Should not be used directly.
     """
+    ctx = ssl.create_default_context()
+    ctx.check_hostname = False
+    ctx.verify_mode = ssl.CERT_NONE
+
     @classmethod
     def request(cls, uri, params={}, client=None, wrapper=FreesoundObject, 
-                method='GET',data=False):
+                method='GET', data=False):
         p = params if params else {}
         url = '%s?%s' % (uri, urlencode(p)) if params else uri
         d = urllib.urlencode(data) if data else None
         headers = {'Authorization':client.header}
         req = Request(url,d,headers)
         try:
-            f = urlopen(req)
+            f = urlopen(req, context=cls.ctx)
         except HTTPError as e:
             resp = e.read()
             if e.code >= 200 and e.code < 300:
@@ -230,17 +223,18 @@ class FSRequest:
         return result
 
     @classmethod
-    def retrieve(cls, url, client,path):
-        r = Retriever()
-        r.addheader('Authorization', client.header)
-        return r.retrieve(url, path)
+    def retrieve(cls, url, client, path):
+        r = requests.get(url)
+        with open (path, 'wb') as audiofile:
+            audiofile.write(r.content)
+        return path
 
 class Pager(FreesoundObject):
     """
     Paginates search results. Can be used in for loops to iterate its results array.
     """
     def __getitem__(self, key):
-        return Sound(self.results[key],self.client)
+        return Sound(self.results[key], self.client)
 
     def next_page(self):
         """
