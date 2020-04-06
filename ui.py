@@ -22,7 +22,7 @@ from . import freesound_api
 from . import freesound
 import datetime
 
-class Freesound_Panel(Panel):
+class FREESOUND_PT_Panel(Panel):
     """Creates a Panel in the Object properties window"""
     bl_label = "Freesound"
     bl_space_type = 'SEQUENCE_EDITOR'
@@ -92,7 +92,7 @@ class Freesound_Panel(Panel):
 
             row = col_list.row(align=True)
             col = row.column(align=True)
-            col.template_list("FREESOUNDList", "", freesound_ptr, "freesound_list", freesound_ptr, "active_list_item")
+            col.template_list("FREESOUND_UL_List", "", freesound_ptr, "freesound_list", freesound_ptr, "active_list_item")
 
             col = row.column(align=True)
 

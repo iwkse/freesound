@@ -10,7 +10,7 @@ import datetime
 import aud
 from . import freesound_api
 
-class FREESOUNDList(btypes.UIList):
+class FREESOUND_UL_List(btypes.UIList):
     sound_id = 0
     avg_rating = 0
     num_ratings = 0
@@ -49,11 +49,11 @@ class FREESOUNDList(btypes.UIList):
         # split.label(text=duration)
         layout.label(text=item.name)
 
-        FREESOUNDList.sound_id = addon_data.freesound_list[addon_data.active_list_item].sound_id
-        FREESOUNDList.avg_rating = addon_data.freesound_list[addon_data.active_list_item].avg_rating
-        FREESOUNDList.num_ratings = addon_data.freesound_list[addon_data.active_list_item].num_ratings
-        FREESOUNDList.comment = addon_data.freesound_list[addon_data.active_list_item].comment
-        FREESOUNDList.comments = addon_data.freesound_list[addon_data.active_list_item].comments
+        FREESOUND_UL_List.sound_id = addon_data.freesound_list[addon_data.active_list_item].sound_id
+        FREESOUND_UL_List.avg_rating = addon_data.freesound_list[addon_data.active_list_item].avg_rating
+        FREESOUND_UL_List.num_ratings = addon_data.freesound_list[addon_data.active_list_item].num_ratings
+        FREESOUND_UL_List.comment = addon_data.freesound_list[addon_data.active_list_item].comment
+        FREESOUND_UL_List.comments = addon_data.freesound_list[addon_data.active_list_item].comments
 
 # Freesound Play
 class Freesound_Play(btypes.Operator):
@@ -72,7 +72,7 @@ class Freesound_Play(btypes.Operator):
         client = Freesound_Validate.get_client(Freesound_Validate)
 
         try:
-            sound_id = FREESOUNDList.get_sound_id(FREESOUNDList)
+            sound_id = FREESOUND_UL_List.get_sound_id(FREESOUND_UL_List)
 
             sound_info = client.get_sound(sound_id)
             if (addon_data.high_quality):
@@ -84,9 +84,8 @@ class Freesound_Play(btypes.Operator):
                 if (isfile(dirname(realpath(__file__)) + '/' + preview_file)):
                     soundfile = dirname(realpath(__file__)) + '/' + preview_file
                 else:
-                    res = sound_info.retrieve_preview(dirname(realpath(__file__)),\
+                    soundfile = sound_info.retrieve_preview(dirname(realpath(__file__)),\
                                                     addon_data.high_quality)
-                    soundfile = res[0]
                 addon_data.soundfile = soundfile
 
             device = aud.Device()
@@ -304,7 +303,7 @@ class Freesound_Info(btypes.Operator):
     def execute(self, context):
         try:
             addon_data = context.scene.freesound_data
-            sound_id = FREESOUNDList.get_sound_id(FREESOUNDList)
+            sound_id = FREESOUND_UL_List.get_sound_id(FREESOUND_UL_List)
             client = Freesound_Validate.get_client(Freesound_Validate)
             sound_info = client.get_sound(sound_id)
             user = sound_info.username
@@ -323,7 +322,7 @@ class Freesound_Add(btypes.Operator):
     def execute(self, context):
         addon_data = context.scene.freesound_data
         #try:
-        sound_id = FREESOUNDList.get_sound_id(FREESOUNDList)
+        sound_id = FREESOUND_UL_List.get_sound_id(FREESOUND_UL_List)
         client = Freesound_Validate.get_client(Freesound_Validate)
         sound_info = client.get_sound(sound_id)
         if (addon_data.high_quality):
