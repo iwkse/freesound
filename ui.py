@@ -143,7 +143,7 @@ class FREESOUND_PT_Panel(Panel):
                 duration = addon_data.freesound_list[addon_data.active_list_item].duration
             except:
                 duration = 0
-            row.label(text="Duration  "+str(bpy.utils.smpte_from_seconds(time=float(duration))))
+            row.label(text="Duration  " + str(bpy.utils.smpte_from_seconds(time=float(duration))))
 
             row = col_list.row()
             row.alignment = 'RIGHT'
@@ -152,4 +152,4 @@ class FREESOUND_PT_Panel(Panel):
                 author = addon_data.freesound_list[addon_data.active_list_item].author
             except:
                 author = "Unknown"
-            row.label(text="Author  "+author)
+            row.label(text="Author  " + author)

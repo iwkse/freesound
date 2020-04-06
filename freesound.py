@@ -84,7 +84,8 @@ class Freesound_Play(btypes.Operator):
                 if (isfile(dirname(realpath(__file__)) + '/' + preview_file)):
                     soundfile = dirname(realpath(__file__)) + '/' + preview_file
                 else:
-                    soundfile = sound_info.retrieve_preview(dirname(realpath(__file__)),\
+                    soundfile = sound_info.retrieve_preview(dirname(realpath(__file__)),
+                                                    sound_info.name,
                                                     addon_data.high_quality)
                 addon_data.soundfile = soundfile
 
@@ -153,7 +154,6 @@ class FreeSoundData(btypes.PropertyGroup):
     def update_max(self, context):
 
         value = context.scene.freesound_data.current_page
-        print (value)
         if (value > 1):
             if (context.scene.freesound_data.current_page > value):
                 context.scene.freesound_data.current_page = value
@@ -252,7 +252,6 @@ class Freesound_Page(btypes.Operator):
                 pages = int(addon_data.sounds/len(addon_data.freesound_list))
             except:
                 pages = 0
-            print (addon_data.current_page)
             if (addon_data.current_page > 1 and addon_data.current_page < pages):
                 results_pager = Freesound_Search.results_pager
                 Freesound_Search.results_pager = results_pager.get_page(addon_data.current_page)
@@ -321,7 +320,6 @@ class Freesound_Add(btypes.Operator):
     bl_options = {'REGISTER', 'UNDO'}
     def execute(self, context):
         addon_data = context.scene.freesound_data
-        #try:
         sound_id = FREESOUND_UL_List.get_sound_id(FREESOUND_UL_List)
         client = Freesound_Validate.get_client(Freesound_Validate)
         sound_info = client.get_sound(sound_id)
@@ -356,13 +354,7 @@ class Freesound_Add(btypes.Operator):
         name = os.path.basename(addon_data.soundfile)
         newStrip = seq.sequences.new_sound(name=name, filepath=addon_data.soundfile, \
                                     channel=addSceneChannel, frame_start=cf)
-
         seq.sequences_all[newStrip.name].frame_start = cf
-
-        # except:
-        #     print("[Add] Search something first...")
-        #     return {'CANCELLED'}
-
         return {'FINISHED'}
 
 # Freesound Search
@@ -480,8 +472,6 @@ class Freesound_Next10(btypes.Operator):
         except:
             return {'FINISHED'}
         addon_data.current_page += 10
-        print (addon_data.current_page)
-        print (pages)
         if (addon_data.current_page > pages):
             addon_data.current_page -= 10
             return {'FINISHED'}
