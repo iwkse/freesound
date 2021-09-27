@@ -16,27 +16,30 @@
 #
 # ##### END GPL LICENSE BLOCK #####
 
-import bpy
 import os.path
+from bpy.utils import register_class, unregister_class
 from bpy.types import Menu
 from bpy.types import Header
-from .freesound import *
+from bpy.types import Scene
 from bpy.types import Operator, AddonPreferences
-from bpy.props import StringProperty
+from bpy.props import StringProperty, BoolProperty, PointerProperty
+from .ui import FREESOUND_PT_Panel
+from .freesound import *
 
 class ApiAddonPreferences(AddonPreferences):
     # this must match the addon name, use '__package__'
     # when defining this in a submodule of a python package.
+    """Check the check the check"""
     bl_idname = __package__
 
-    freesound_api = bpy.props.StringProperty(
-        subtype='PASSWORD',
-        name="Insert your API Key",
-        description="Your freesound API Key.",
-        default="Get it here http://www.freesound.org/apiv2/apply/"
+    freesound_api : StringProperty(
+        subtype = "PASSWORD",
+        name = "Insert your API Key",
+        description = "Your freesound API Key.",
+        default = "Get it here http://www.freesound.org/apiv2/apply/"
     )
 
-    freesound_access = bpy.props.BoolProperty()
+    freesound_access : BoolProperty()
 
     def draw(self, context):
         layout = self.layout
@@ -50,8 +53,8 @@ class ApiAddonPreferences(AddonPreferences):
 bl_info = {
     "name": "Freesound",
     "author": "Salvatore De Paolis",
-    "version": (1, 0),
-    "blender": (2, 77, 1),
+    "version": (2, 0),
+    "blender": (2, 80, 0),
     "category": "Sequencer",
     "location": "Sequencer",
     "description": "Connect to freesound to list sounds",
@@ -65,14 +68,36 @@ if "bpy" in locals():
 else:
     from . import ui
 
+classes = (
+        ApiAddonPreferences,
+        FREESOUND_UL_List,
+        Freesound_Play,
+        FreeSoundItem,
+        FreeSoundData,
+        Freesound_Page,
+        Freesound_Validate,
+        Freesound_Info,
+        Freesound_Add,
+        Freesound_Search,
+        Freesound_Next,
+        Freesound_Next10,
+        Freesound_Last,
+        Freesound_Prev,
+        Freesound_Prev10,
+        Freesound_First,
+        Freesound_Pause,
+        FREESOUND_PT_Panel,
+)
 
 # Registration
 def register():
-    bpy.utils.register_module(__name__)
+    for cls in classes:
+        register_class(cls)
 # Extend the scene class here to include the addon data
-    bpy.types.Scene.freesound_data = bpy.props.PointerProperty(type=FreeSoundData)
+    Scene.freesound_data = PointerProperty(type=FreeSoundData)
 def unregister():
-    bpy.utils.unregister_module(__name__)
+    for cls in classes:
+        unregister_class(cls)
 
 if __name__ == '__main__':
     register()

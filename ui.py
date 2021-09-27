@@ -17,10 +17,12 @@
 # ##### END GPL LICENSE BLOCK #####
 
 import bpy
+from bpy.types import Panel
 from . import freesound_api
 from . import freesound
+import datetime
 
-class FreesoundPanel(bpy.types.Panel):
+class FREESOUND_PT_Panel(Panel):
     """Creates a Panel in the Object properties window"""
     bl_label = "Freesound"
     bl_space_type = 'SEQUENCE_EDITOR'
@@ -41,62 +43,72 @@ class FreesoundPanel(bpy.types.Panel):
 
     def draw(self, context):
         layout = self.layout
+        layout.use_property_split = True
+        layout.use_property_decorate = False
         sce = context.scene
 
         frame_current = sce.frame_current
         addon_data = context.scene.freesound_data
-        split = layout.split(percentage=0.8)
-        addon_prefs =  bpy.context.user_preferences.addons[__package__].preferences
+        split = layout.split(factor=0.8, align=True)
+        addon_prefs =  bpy.context.preferences.addons[__package__].preferences
 
 
         if (addon_prefs.freesound_access == True):
 
-            split2 = layout.split(percentage=0.8)
+            col = layout.column(align=True)
+
+            col.prop(addon_data, "license", text="License")
+            col.prop(addon_data, "search_filter", text="Filter")
+            col = col.column(align=True)
+            col.prop(addon_data, "duration_from", text="Duration Minimum")
+            col.prop(addon_data, "duration_to", text="Maximum")
+
+            split2 = col.row(align=True)
             split2.prop(
                 addon_data,
                 "search_item",
-                text=""
+                text="Search"
             )
-            split2.operator("freesound.search", text="Search", icon='VIEWZOOM')
+            split2.operator("freesound.search", text="", icon='VIEWZOOM')
 
-            split3 = layout.split(percentage=0.1)
-            split3.prop(addon_data, "high_quality")
-            split3.prop(addon_data, "duration_from", "from")
-            split3.prop(addon_data, "duration_to", "to")
-            split3.prop(addon_data, "search_filter")
-            split3.prop(addon_data, "license")
-            freesound_ptr = bpy.types.AnyType(bpy.context.scene.freesound_data)
-            
-            row = layout.row()
-            col = row.column(align=True)
-
-            if (addon_data.sound_is_playing):
-                col.operator("freesound.pause", text="", icon='MUTE_IPO_OFF')
-            else:
-                col.operator("freesound.play", text="", icon='MUTE_IPO_ON') 
-
-            col.operator("freesound.add", text="", icon='PLUS')
-            col.operator("freesound.info", text="", icon='INFO')
-            col = row.column(align=True)
-
-
-            col.template_list("FREESOUNDList", "", freesound_ptr, "freesound_list", freesound_ptr, "active_list_item")
-            
-            row = layout.row()
-
+            col = layout.box()
+            col_list = col.column(align=True)
+            row = col_list.row(align=True)
+            row.alignment = 'CENTER'
+            row.label(text="List Page")
             row.operator("freesound.firstpage", icon='REW', text="")
-            row.operator("freesound.prev10page", icon='PREV_KEYFRAME', text="")
-            row.operator("freesound.prevpage", icon='PLAY_REVERSE', text="")
-            split = row.split(percentage=0.5)
-            
-            split.prop(addon_data, "current_page", "Page")
+            row.operator("freesound.prev10page", icon='TRIA_LEFT', text="")
+            row.prop(addon_data, "current_page", text="")
+            row.operator("freesound.next10page", icon='TRIA_RIGHT', text="")
+            row.operator("freesound.lastpage", icon='FF', text="")
 
             try:
                 pages = int(addon_data.sounds/len(addon_data.freesound_list))
-                split.label(text="of     %s " % str(pages))
+                row.label(text="of %s" % str(pages))
             except:
-                split.label(text="1 of ...")
-            
+                row.label(text="1 of ...")
+
+            freesound_ptr = bpy.types.AnyType(bpy.context.scene.freesound_data)
+
+            row = col_list.row(align=True)
+            col = row.column(align=True)
+            col.template_list("FREESOUND_UL_List", "", freesound_ptr, "freesound_list", freesound_ptr, "active_list_item")
+
+            col = row.column(align=True)
+
+            if (addon_data.sound_is_playing):
+                col.operator("freesound.pause", text="", icon='PAUSE')
+            else:
+                col.operator("freesound.play", text="", icon='PLAY')
+            col.separator()
+            col.operator("freesound.info", text="", icon='URL')
+            col.separator()
+            col.operator("freesound.add", text="", icon='NLA_PUSHDOWN')
+
+            col_list.prop(addon_data, "high_quality", text="Use High Quality File")
+
+            row = col_list.row(align=True)
+            row.alignment = 'RIGHT'
             val = [0,1,2,3,4]
             point_star = 0
             try:
@@ -107,25 +119,37 @@ class FreesoundPanel(bpy.types.Panel):
                 if (l <= point_star-1):
                     val[l] = 'SOLO_ON'
                 elif ((point_star % 1) > 0.5):
-                        val[l] = 'SPACE2'
+                        val[l] = 'SOLO_OFF'
                 elif ((point_star % 1) <= 0.5 and (point_star % 1) != 0):
-                        val[l] = 'MARKER_HLT'
+                        val[l] = 'SORTBYEXT'
                 elif ((point_star % 1) == 0):
                         val[l] = 'SOLO_OFF'
-            
-            if (addon_data.freesound_list_loaded):
-                split = split.split(percentage=0.1)
-                split.label(text="",  icon=val[0])
-                split = split.split(percentage=0.1)
-                split.label(text="", icon=val[1])
-                split = split.split(percentage=0.1)
-                split.label(text="", icon=val[2])
-                split = split.split(percentage=0.1)
-                split.label(text="", icon=val[3])
-                split = split.split(percentage=0.1)
-                split.label(text="", icon=val[4])
-            
-            row.operator("freesound.nextpage", icon='PLAY', text="")
-            row.operator("freesound.next10page", icon='NEXT_KEYFRAME', text="")
-            row.operator("freesound.lastpage", icon='FF', text="")
 
+            if (addon_data.freesound_list_loaded):
+                try:
+                    num_ratings = addon_data.freesound_list[addon_data.active_list_item].num_ratings
+                except:
+                    num_ratings = 0
+                row.label(text="Rating ")
+                row.label(text="", icon=val[0])
+                row.label(text="", icon=val[1])
+                row.label(text="", icon=val[2])
+                row.label(text="", icon=val[3])
+                row.label(text="", icon=val[4])
+
+            row = col_list.row()
+            row.alignment = 'RIGHT'
+            try:
+                duration = addon_data.freesound_list[addon_data.active_list_item].duration
+            except:
+                duration = 0
+            row.label(text="Duration  " + str(bpy.utils.smpte_from_seconds(time=float(duration))))
+
+            row = col_list.row()
+            row.alignment = 'RIGHT'
+
+            try:
+                author = addon_data.freesound_list[addon_data.active_list_item].author
+            except:
+                author = "Unknown"
+            row.label(text="Author  " + author)
