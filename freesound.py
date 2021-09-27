@@ -1,11 +1,16 @@
-import bpy.types
+import os
+import bpy
+import bpy.types as btypes
+from bpy.props import BoolProperty, StringProperty, FloatProperty, \
+                      EnumProperty, IntProperty, CollectionProperty
 import webbrowser
-import os.path
+from os.path import dirname, realpath, isfile
+from bpy import ops,context
 import datetime
 import aud
 from . import freesound_api
 
-class FREESOUNDList(bpy.types.UIList):
+class FREESOUND_UL_List(btypes.UIList):
     sound_id = 0
     avg_rating = 0
     num_ratings = 0
@@ -35,23 +40,23 @@ class FREESOUNDList(bpy.types.UIList):
         obj = active_data
         addon_data = context.scene.freesound_data
         sounds = addon_data.freesound_list
-        split=layout.split(percentage=0.5)
-        try:
-            duration = str(datetime.timedelta(seconds=float(item.duration)))
-        except:
-            duration = "0"
-        split=layout.split(percentage=0.2)
-        split.label(duration)
-        split.label(item.name)
+        # split=layout.split(factor=0.5, align=True)
+        # try:
+        #     duration = str(datetime.timedelta(seconds=float(item.duration)))
+        # except:
+        #     duration = "0"
+        # split=layout.split(factor=0.2, align=True)
+        # split.label(text=duration)
+        layout.label(text=item.name)
 
-        FREESOUNDList.sound_id = addon_data.freesound_list[addon_data.active_list_item].sound_id
-        FREESOUNDList.avg_rating = addon_data.freesound_list[addon_data.active_list_item].avg_rating
-        FREESOUNDList.num_ratings = addon_data.freesound_list[addon_data.active_list_item].num_ratings
-        FREESOUNDList.comment = addon_data.freesound_list[addon_data.active_list_item].comment
-        FREESOUNDList.comments = addon_data.freesound_list[addon_data.active_list_item].comments
+        FREESOUND_UL_List.sound_id = addon_data.freesound_list[addon_data.active_list_item].sound_id
+        FREESOUND_UL_List.avg_rating = addon_data.freesound_list[addon_data.active_list_item].avg_rating
+        FREESOUND_UL_List.num_ratings = addon_data.freesound_list[addon_data.active_list_item].num_ratings
+        FREESOUND_UL_List.comment = addon_data.freesound_list[addon_data.active_list_item].comment
+        FREESOUND_UL_List.comments = addon_data.freesound_list[addon_data.active_list_item].comments
 
 # Freesound Play
-class Freesound_Play(bpy.types.Operator):
+class Freesound_Play(btypes.Operator):
     bl_label = 'Play'
     bl_idname = 'freesound.play'
     bl_description = 'Preview the sound'
@@ -60,14 +65,15 @@ class Freesound_Play(bpy.types.Operator):
     def execute(self, context):
         addon_data = context.scene.freesound_data
 
-        if (not addon_data.freesound_list_loaded):  
-            return {"FINISHED"}
+        if (not addon_data.freesound_list_loaded):
+            return {'FINISHED'}
+
+        addon_data.sound_is_playing = True
+        client = Freesound_Validate.get_client(Freesound_Validate)
 
         try:
-            addon_data.sound_is_playing = True
-            client = Freesound_Validate.get_client(Freesound_Validate)
+            sound_id = FREESOUND_UL_List.get_sound_id(FREESOUND_UL_List)
 
-            sound_id = FREESOUNDList.get_sound_id(FREESOUNDList)
             sound_info = client.get_sound(sound_id)
             if (addon_data.high_quality):
                 preview_file = str(sound_info.previews.preview_hq_mp3.split("/")[-1])
@@ -75,60 +81,64 @@ class Freesound_Play(bpy.types.Operator):
                 preview_file = str(sound_info.previews.preview_lq_mp3.split("/")[-1])
 
             if (preview_file):
-                if (os.path.isfile(os.path.dirname(os.path.realpath(__file__)) + '/' + preview_file)):
-                    soundfile = os.path.dirname(os.path.realpath(__file__)) + '/' + preview_file
+                if (isfile(dirname(realpath(__file__)) + '/' + preview_file)):
+                    soundfile = dirname(realpath(__file__)) + '/' + preview_file
                 else:
-                    res = sound_info.retrieve_preview(os.path.dirname(os.path.realpath(__file__)), addon_data.high_quality)
-                    soundfile = res[0]
+                    soundfile = sound_info.retrieve_preview(dirname(realpath(__file__)),
+                                                    sound_info.name,
+                                                    addon_data.high_quality)
                 addon_data.soundfile = soundfile
-                device = aud.device()
-                factory = aud.Factory(soundfile)
-                Freesound_Play.handle = device.play(factory)
-                Freesound_Play.handle.loop_count = -1
+
+            device = aud.Device()
+            sound = aud.Sound.file(soundfile)
+            Freesound_Play.handle = device.play(sound)
+            Freesound_Play.handle.loop_count = -1
         except:
-            print ("File not found, search first")
+            print("[Play] Search something first...")
+            return {'CANCELLED'}
+
         return {'FINISHED'}
 
 
-class FreeSoundItem(bpy.types.PropertyGroup):
-    sound_id = bpy.props.StringProperty(
+class FreeSoundItem(btypes.PropertyGroup):
+    sound_id: StringProperty(
         name="Sound ID",
         description="The ID of this sound",
         default="0"
     )
-    avg_rating = bpy.props.FloatProperty(
+    avg_rating: FloatProperty(
         name="Average Rating",
         description="Numerical average rating",
         default=0
     )
-    num_ratings = bpy.props.StringProperty(
+    num_ratings: StringProperty(
         name="Number of Ratings",
         description="Ratings",
         default="0"
     )
-    comment = bpy.props.StringProperty(
+    comment: StringProperty(
         name="Comment",
         description="Comment",
         default="0"
     )
-    comments = bpy.props.StringProperty(
+    comments: StringProperty(
         name="Comments",
         description="Comments",
         default="0"
     )
-    play = bpy.props.BoolProperty()
-    add = bpy.props.BoolProperty()
-    duration = bpy.props.StringProperty(
+    play: BoolProperty()
+    add : BoolProperty()
+    duration : StringProperty(
         name="Sound Duration",
         description="Duration of sound",
         default="NaN"
     )
-    name = bpy.props.StringProperty(
+    name: StringProperty(
         name="Sound name",
         description="The name of this sound",
         default="Name"
     )
-    author = bpy.props.StringProperty(
+    author: StringProperty(
         name="Author",
         description="The author of this sound",
         default="Author"
@@ -137,34 +147,48 @@ class FreeSoundItem(bpy.types.PropertyGroup):
     @classmethod
     def poll(cls, context):
         return context.scene.freesound_data.active_list_item
+
+
 # Definess one instance of the addon data (one per scene)
-class FreeSoundData(bpy.types.PropertyGroup):
-    high_quality = bpy.props.BoolProperty(
+class FreeSoundData(btypes.PropertyGroup):
+    def update_max(self, context):
+
+        value = context.scene.freesound_data.current_page
+        if (value > 1):
+            if (context.scene.freesound_data.current_page > value):
+                context.scene.freesound_data.current_page = value
+            ops.freesound.current_page(context.scene.freesound_data.current_page)
+        return None
+
+    high_quality: BoolProperty(
         name="HQ",
         description="Best quality play and add for non-oauth2"
     )
-    duration_from = bpy.props.FloatProperty(
+    duration_from: FloatProperty(
         description = "Insert duration in seconds. -1 means any",
         default=-1,
         min=-1,
         precision=1
     )
-    duration_to = bpy.props.FloatProperty(
-        description = "Insert duration in secondsi. -1 means any",
+    duration_to: FloatProperty(
+        description = "Insert duration in seconds. -1 means any",
         default=-1,
         min=-1,
         precision=1
     )
-    search_filter = bpy.props.EnumProperty(
+    search_filter: EnumProperty(
         items = [
+            ('score_desc', 'Automatic by relevance', 'Automatic by relevance'),
             ('rating_desc', 'Rating (Highest)', 'Rating (Highest)'),
-            ('rating_asc', 'Rating (Lowest)', 'Rating (Lowest)')
+            ('rating_asc', 'Rating (Lowest)', 'Rating (Lowest)'),
+            ('duration_desc', 'Duration (long first)', 'Duration (long first)'),
+            ('duration_asc', 'Duration (short first)', 'Duration (short first)')
         ],
         name="",
-        default="rating_desc",
+        default="score_desc",
         description="Order"
     )
-    license = bpy.props.EnumProperty(
+    license: EnumProperty(
         items = [
             ('ALL', 'All', 'All'),
             ('Attribution', 'Attribution', 'Attribution'),
@@ -176,55 +200,48 @@ class FreeSoundData(bpy.types.PropertyGroup):
         default='ALL',
         description="The type of license"
     )
-    def update_max(self, context):
 
-        value = context.scene.freesound_data.current_page 
-        print (value)
-        if (value > 1):
-            if (context.scene.freesound_data.current_page > value):
-                context.scene.freesound_data.current_page = value
-            bpy.ops.freesound.current_page(context.scene.freesound_data.current_page)
-        return None
-
-    current_page = bpy.props.IntProperty(
+    current_page: IntProperty(
         description = "Current Pager",
         default=1,
         min=1,
         update=update_max
     )
-    pager_num = bpy.props.IntProperty(
+    pager_num: IntProperty(
         description = "Current pager",
         default = 0
     )
-    sounds = bpy.props.IntProperty(
+    sounds: IntProperty(
         description = "Number of sounds",
         default = 0
     )
-    soundfile = bpy.props.StringProperty(
+    soundfile: StringProperty(
         name="Sound Path",
         description="Path to the file",
-        default=os.path.dirname(os.path.realpath(__file__))
+        default=dirname(realpath(__file__))
     )
-    sound_is_playing = bpy.props.BoolProperty(
+    sound_is_playing: BoolProperty(
         description = 'Sound is playing'
     )
-    freesound_loading = bpy.props.BoolProperty(
+    freesound_loading: BoolProperty(
         description = 'Loading'
     )
-    freesound_access = bpy.props.BoolProperty(
+    freesound_access: BoolProperty(
         description=(
             'Access to Freesound API'
         )
     )
-    search_item = bpy.props.StringProperty(
+    search_item: StringProperty(
         description=(
             'Sound to search'
         )
     )
-    active_list_item = bpy.props.IntProperty()
-    freesound_list = bpy.props.CollectionProperty(type=FreeSoundItem)
-    freesound_list_loaded = bpy.props.BoolProperty()
-class Freesound_Page(bpy.types.Operator):
+    active_list_item: IntProperty()
+    freesound_list: CollectionProperty(type=FreeSoundItem)
+    freesound_list_loaded: BoolProperty()
+
+
+class Freesound_Page(btypes.Operator):
     bl_label = "Jump to Page"
     bl_idname = "freesound.current_page"
 
@@ -235,7 +252,6 @@ class Freesound_Page(bpy.types.Operator):
                 pages = int(addon_data.sounds/len(addon_data.freesound_list))
             except:
                 pages = 0
-            print (addon_data.current_page)
             if (addon_data.current_page > 1 and addon_data.current_page < pages):
                 results_pager = Freesound_Search.results_pager
                 Freesound_Search.results_pager = results_pager.get_page(addon_data.current_page)
@@ -257,7 +273,7 @@ class Freesound_Page(bpy.types.Operator):
         return {'FINISHED'}
 
 # Freesound Validate
-class Freesound_Validate(bpy.types.Operator):
+class Freesound_Validate(btypes.Operator):
     bl_label = 'Validate'
     bl_idname = 'freesound.validate'
     bl_description = 'Validate API for Freesound'
@@ -266,8 +282,8 @@ class Freesound_Validate(bpy.types.Operator):
     def get_client(self):
         return self.client
     def execute(self, context):
-        user_preferences = context.user_preferences
-        addon_prefs = user_preferences.addons[__package__].preferences
+        preferences = context.preferences
+        addon_prefs = preferences.addons[__package__].preferences
         self.client.set_token(addon_prefs.freesound_api)
         s = self.client.check_access()
         if (s):
@@ -278,7 +294,7 @@ class Freesound_Validate(bpy.types.Operator):
             return {'FINISHED'}
 
 # Freesound Info
-class Freesound_Info(bpy.types.Operator):
+class Freesound_Info(btypes.Operator):
     bl_label = 'Info'
     bl_idname = 'freesound.info'
     bl_description = 'Information about the user and sound'
@@ -286,58 +302,74 @@ class Freesound_Info(bpy.types.Operator):
     def execute(self, context):
         try:
             addon_data = context.scene.freesound_data
-            sound_id = FREESOUNDList.get_sound_id(FREESOUNDList)
+            sound_id = FREESOUND_UL_List.get_sound_id(FREESOUND_UL_List)
             client = Freesound_Validate.get_client(Freesound_Validate)
             sound_info = client.get_sound(sound_id)
             user = sound_info.username
             url = 'https://www.freesound.org/people/'+ user  + '/sounds/'  + str(sound_id)
             webbrowser.open(url)
         except:
-            print ("File not found, search first")
-        
+            print ("[Info] Search something first...")
+
         return {'FINISHED'}
 # Freesound Add
-class Freesound_Add(bpy.types.Operator):
+class Freesound_Add(btypes.Operator):
     bl_label = 'Add'
     bl_idname = 'freesound.add'
     bl_description = 'Add sound to the VSE at current frame'
     bl_options = {'REGISTER', 'UNDO'}
     def execute(self, context):
-        try:
-            addon_data = context.scene.freesound_data
-            sound_id = FREESOUNDList.get_sound_id(FREESOUNDList)
-            client = Freesound_Validate.get_client(Freesound_Validate)
-            sound_info = client.get_sound(sound_id)
-            if (addon_data.high_quality):
-                preview_file = str(sound_info.previews.preview_hq_mp3.split("/")[-1])
-            else:
-                preview_file = str(sound_info.previews.preview_lq_mp3.split("/")[-1])
-            
-            if (os.path.isfile(os.path.dirname(os.path.realpath(__file__)) + '/' + preview_file)):
-                soundfile = os.path.dirname(os.path.realpath(__file__)) + '/' + preview_file
-            else:
-                res = sound_info.retrieve_preview(os.path.dirname(os.path.realpath(__file__)), addon_data.high_quality)
-                soundfile = res[0]
-            addon_data.soundfile = soundfile
-            bpy.ops.sequencer.sound_strip_add(filepath=addon_data.soundfile, frame_start=bpy.context.scene.frame_current)
-        except:
-            print ("File not found, search first")
+        addon_data = context.scene.freesound_data
+        sound_id = FREESOUND_UL_List.get_sound_id(FREESOUND_UL_List)
+        client = Freesound_Validate.get_client(Freesound_Validate)
+        sound_info = client.get_sound(sound_id)
+        if (addon_data.high_quality):
+            preview_file = str(sound_info.previews.preview_hq_mp3.split("/")[-1])
+        else:
+            preview_file = str(sound_info.previews.preview_lq_mp3.split("/")[-1])
 
+        if (isfile(dirname(realpath(__file__)) + '/' + preview_file)):
+            soundfile = dirname(realpath(__file__)) + '/' + preview_file
+        else:
+            res = sound_info.retrieve_preview(dirname(realpath(__file__)),\
+                                                addon_data.high_quality)
+            soundfile = res[0]
+        addon_data.soundfile = soundfile
+
+        if not bpy.context.scene.sequence_editor:
+            bpy.context.scene.sequence_editor_create()
+        scn = bpy.context.scene
+        seq = scn.sequence_editor
+        cf = scn.frame_current
+        sequences = bpy.context.sequences
+
+        if not sequences:
+            addSceneChannel = 1
+        else:
+            channels = [s.channel for s in sequences]
+            channels = sorted(list(set(channels)))
+            empty_channel = channels[-1] + 1
+            addSceneChannel = empty_channel
+
+        name = os.path.basename(addon_data.soundfile)
+        newStrip = seq.sequences.new_sound(name=name, filepath=addon_data.soundfile, \
+                                    channel=addSceneChannel, frame_start=cf)
+        seq.sequences_all[newStrip.name].frame_start = cf
         return {'FINISHED'}
-    
+
 # Freesound Search
-class Freesound_Search(bpy.types.Operator):
+class Freesound_Search(btypes.Operator):
     bl_label = 'Search'
     bl_idname = 'freesound.search'
     bl_description = 'Search in Freesound archive'
     bl_options = {'REGISTER', 'UNDO'}
     results_pager = 0
     def execute(self, context):
-        addon_prefs = context.user_preferences.addons[__package__].preferences
+        addon_prefs = context.preferences.addons[__package__].preferences
         client = Freesound_Validate.get_client(Freesound_Validate)
-        
+
         if (not client.token):
-            bpy.ops.freesound.validate()
+            ops.freesound.validate()
 
         addon_data = context.scene.freesound_data
         addon_data.freesound_loading = True
@@ -350,7 +382,7 @@ class Freesound_Search(bpy.types.Operator):
             int(addon_data.duration_to)
         except:
             addon_data.duration_to = "-1"
-        
+
         if (addon_data.duration_from == -1):
             duration_from = "*"
         else:
@@ -385,12 +417,13 @@ class Freesound_Search(bpy.types.Operator):
             _sound.author = sound.username
 
         addon_data.freesound_list_loaded = True
+        bpy.ops.freesound.firstpage()
         return {'FINISHED'}
     def get_results_pager(self):
         return self.results_pager
 
 # Freesound Next page search
-class Freesound_Next(bpy.types.Operator):
+class Freesound_Next(btypes.Operator):
     bl_label = 'Next'
     bl_idname = 'freesound.nextpage'
     bl_description = 'Next page of sounds'
@@ -405,7 +438,7 @@ class Freesound_Next(bpy.types.Operator):
         if (addon_data.current_page > pages):
             return {'FINISHED'}
 
-        if (addon_data.freesound_list_loaded):  
+        if (addon_data.freesound_list_loaded):
             results_pager = Freesound_Search.results_pager
 
             if (addon_data.current_page < pages):
@@ -420,13 +453,13 @@ class Freesound_Next(bpy.types.Operator):
                     _sound.avg_rating = sound.avg_rating
                     _sound.duration = str(sound.duration)
                     _sound.author = str(sound.username)
-                
-                addon_data.current_page += 1 
-                
+
+                addon_data.current_page += 1
+
         return {'FINISHED'}
 
 # Freesound Next 10 pages search
-class Freesound_Next10(bpy.types.Operator):
+class Freesound_Next10(btypes.Operator):
     bl_label = 'Next 10'
     bl_idname = 'freesound.next10page'
     bl_description = 'Next 10 pages of sounds'
@@ -439,13 +472,11 @@ class Freesound_Next10(bpy.types.Operator):
         except:
             return {'FINISHED'}
         addon_data.current_page += 10
-        print (addon_data.current_page)
-        print (pages)
         if (addon_data.current_page > pages):
             addon_data.current_page -= 10
             return {'FINISHED'}
 
-        if (addon_data.freesound_list_loaded):  
+        if (addon_data.freesound_list_loaded):
             results_pager = Freesound_Search.results_pager
             if (addon_data.current_page < pages):
                 addon_data.freesound_list.clear()
@@ -462,7 +493,7 @@ class Freesound_Next10(bpy.types.Operator):
         return {'FINISHED'}
 
 # Freesound Last page search
-class Freesound_Last(bpy.types.Operator):
+class Freesound_Last(btypes.Operator):
     bl_label = 'Last'
     bl_idname = 'freesound.lastpage'
     bl_description = 'Last page of sounds'
@@ -470,7 +501,7 @@ class Freesound_Last(bpy.types.Operator):
 
     def execute(self, context):
         addon_data = context.scene.freesound_data
-        if (addon_data.freesound_list_loaded):  
+        if (addon_data.freesound_list_loaded):
             results_pager = Freesound_Search.results_pager
             addon_data.pager_num = int(addon_data.sounds/len(addon_data.freesound_list))
 
@@ -490,7 +521,7 @@ class Freesound_Last(bpy.types.Operator):
         return {'FINISHED'}
 
 # Freesound Prev page search
-class Freesound_Prev(bpy.types.Operator):
+class Freesound_Prev(btypes.Operator):
     bl_label = 'Prev'
     bl_idname = 'freesound.prevpage'
     bl_description = 'Prev page of sounds'
@@ -503,9 +534,9 @@ class Freesound_Prev(bpy.types.Operator):
             addon_data.current_page = 1
             return {'FINISHED'}
 
-        if (addon_data.freesound_list_loaded):  
+        if (addon_data.freesound_list_loaded):
             results_pager = Freesound_Search.results_pager
-            
+
             addon_data.freesound_list.clear()
             Freesound_Search.results_pager = results_pager.previous_page()
 
@@ -517,11 +548,11 @@ class Freesound_Prev(bpy.types.Operator):
                 _sound.avg_rating = sound.avg_rating
                 _sound.duration = str(sound.duration)
                 _sound.author = sound.username
-            addon_data.current_page -= 1 
+            addon_data.current_page -= 1
         return {'FINISHED'}
 
 # Freesound Prev 10 pages search
-class Freesound_Prev10(bpy.types.Operator):
+class Freesound_Prev10(btypes.Operator):
     bl_label = 'Next 10'
     bl_idname = 'freesound.prev10page'
     bl_description = 'Prev 10 pages of sounds'
@@ -533,9 +564,9 @@ class Freesound_Prev10(bpy.types.Operator):
         if (cur_page <= 0):
             addon_data.current_page = 1
             return {'FINISHED'}
-        if (addon_data.freesound_list_loaded):  
+        if (addon_data.freesound_list_loaded):
             results_pager = Freesound_Search.results_pager
-            
+
             addon_data.freesound_list.clear()
             Freesound_Search.results_pager = results_pager.get_page(addon_data.current_page - 10)
 
@@ -547,11 +578,11 @@ class Freesound_Prev10(bpy.types.Operator):
                 _sound.avg_rating = sound.avg_rating
                 _sound.duration = str(sound.duration)
                 _sound.author = str(sound.username)
-            addon_data.current_page -= 10 
+            addon_data.current_page -= 10
         return {'FINISHED'}
 
 # Freesound First page search
-class Freesound_First(bpy.types.Operator):
+class Freesound_First(btypes.Operator):
     bl_label = 'First'
     bl_idname = 'freesound.firstpage'
     bl_description = 'First page of sounds'
@@ -559,7 +590,7 @@ class Freesound_First(bpy.types.Operator):
 
     def execute(self, context):
         addon_data = context.scene.freesound_data
-        if (addon_data.freesound_list_loaded):  
+        if (addon_data.freesound_list_loaded):
             results_pager = Freesound_Search.results_pager
             addon_data.pager_num = int(addon_data.sounds/len(addon_data.freesound_list))
 
@@ -578,7 +609,7 @@ class Freesound_First(bpy.types.Operator):
 
         return {'FINISHED'}
 # Freesound Stop
-class Freesound_Pause(bpy.types.Operator):
+class Freesound_Pause(btypes.Operator):
     bl_label = 'Pause'
     bl_idname = 'freesound.pause'
     bl_description = 'Pause the sound'
@@ -586,7 +617,7 @@ class Freesound_Pause(bpy.types.Operator):
     handle = 0
     def execute(self, context):
         addon_data = context.scene.freesound_data
-        if (addon_data.freesound_list_loaded):  
+        if (addon_data.freesound_list_loaded):
             addon_data.sound_is_playing = False
             Freesound_Play.handle.stop()
         return {'FINISHED'}

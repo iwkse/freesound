@@ -1,21 +1,22 @@
 # Freesound Add-on
-Blender Freesound add-on 1.0, Release of 22 August 2016
+Blender Freesound add-on 2.0, for Blender 2.80 and later only
 
 This add-on allows you to browse, listen and insert sounds from the freesound.org archive in your Blender VSE.
 An API key is required: you can request it from http://freesound.org/apiv2/apply (Freesound login is required)
+The plugin documentation button opens the API freesound page as well.
 
 # Installation
-To install the add-on, clone the GIT repository or download the zip and manually install from the user preferences dialog.
+To install the add-on, clone the GIT repository or download the release and manually install from the user preferences dialog.
 
 # Usage
 
 Before to start using the add-on you need to get an API key from freesound as decribed above. After this you insert the API and click on Validate button. If everything go fine you will see the button saying Validated as in the picture.
 
-![Freesound Setup](https://ibin.co/2sbYj6Y7dZKT.jpg)
+![Freesound Setup](https://ibin.co/4Po6Yhu1Se7Y.jpg)
 
 Now you can save preferences so that the value is not lost.
 
-![Freesound](https://ibin.co/2sbZ1WdvTAOv.jpg)
+![Freesound](https://ibin.co/4Po76js8PHnB.jpg)
 
 Using the add-on is straightforward and intuitive.
 All you have to do is search for some sounds and click on the Search button. You got further options for searching, HQ (High Quality Preview) allows you to download the best available preview at cost of download speed and disk space. 
