@@ -57,12 +57,6 @@ class FREESOUND_PT_Panel(Panel):
 
             col = layout.column(align=True)
 
-            col.prop(addon_data, "license", text="License")
-            col.prop(addon_data, "search_filter", text="Filter")
-            col = col.column(align=True)
-            col.prop(addon_data, "duration_from", text="Duration Minimum")
-            col.prop(addon_data, "duration_to", text="Maximum")
-
             split2 = col.row(align=True)
             split2.prop(
                 addon_data,
@@ -70,6 +64,12 @@ class FREESOUND_PT_Panel(Panel):
                 text="Search"
             )
             split2.operator("freesound.search", text="", icon='VIEWZOOM')
+
+            col.prop(addon_data, "license", text="License")
+            col.prop(addon_data, "search_filter", text="Filter")
+            col = col.column(align=True)
+            col.prop(addon_data, "duration_from", text="Duration Minimum")
+            col.prop(addon_data, "duration_to", text="Maximum")
 
             col = layout.box()
             col_list = col.column(align=True)
@@ -101,14 +101,14 @@ class FREESOUND_PT_Panel(Panel):
             else:
                 col.operator("freesound.play", text="", icon='PLAY')
             col.separator()
-            col.operator("freesound.info", text="", icon='URL')
-            col.separator()
             col.operator("freesound.add", text="", icon='NLA_PUSHDOWN')
-
-            col_list.prop(addon_data, "high_quality", text="Use High Quality File")
+            col.separator()
+            col.prop(addon_data, "high_quality", text="", icon="EVENT_H", toggle=True)
+            col.separator()
+            col.operator("freesound.info", text="", icon='URL')
 
             row = col_list.row(align=True)
-            row.alignment = 'RIGHT'
+            # row.alignment = 'RIGHT'
             val = [0,1,2,3,4]
             point_star = 0
             try:
@@ -130,26 +130,39 @@ class FREESOUND_PT_Panel(Panel):
                     num_ratings = addon_data.freesound_list[addon_data.active_list_item].num_ratings
                 except:
                     num_ratings = 0
-                row.label(text="Rating ")
-                row.label(text="", icon=val[0])
-                row.label(text="", icon=val[1])
-                row.label(text="", icon=val[2])
-                row.label(text="", icon=val[3])
-                row.label(text="", icon=val[4])
 
-            row = col_list.row()
-            row.alignment = 'RIGHT'
+                split = row.split(factor=0.4, align=True)
+                split.alignment = 'RIGHT'
+                split.label(text="Rating ")
+                split = split.split(factor=0.2, align=True)
+                split.alignment = 'RIGHT'
+                split.label(text="", icon=val[0])
+                split.label(text="", icon=val[1])
+                split.label(text="", icon=val[2])
+                split.label(text="", icon=val[3])
+                split.label(text="", icon=val[4])
+
+
             try:
                 duration = addon_data.freesound_list[addon_data.active_list_item].duration
             except:
                 duration = 0
-            row.label(text="Duration  " + str(bpy.utils.smpte_from_seconds(time=float(duration))))
-
-            row = col_list.row()
-            row.alignment = 'RIGHT'
+            row = col_list.row(align=True)
+            split = row.split(factor=0.4, align=True)
+            split.alignment = 'RIGHT'
+            split.label(text="Duration")
+            split = split.split(factor=0.6, align=True)
+            split.alignment = 'LEFT'
+            split.label(text=str(bpy.utils.smpte_from_seconds(time=float(duration))))
 
             try:
                 author = addon_data.freesound_list[addon_data.active_list_item].author
             except:
                 author = "Unknown"
-            row.label(text="Author  " + author)
+            row = col_list.row(align=True)
+            split = row.split(factor=0.4, align=True)
+            split.alignment = 'RIGHT'
+            split.label(text="Author")
+            split = split.split(factor=0.6, align=True)
+            split.alignment = 'LEFT'                
+            split.label(text=author)
