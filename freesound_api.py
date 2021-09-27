@@ -21,7 +21,7 @@ from urllib.parse import urlparse, urlencode, quote, parse_qs
 from urllib.error import HTTPError
 
 class URIS():
-    HOST = 'www.freesound.org'
+    HOST = 'freesound.org'
     BASE =  'https://'+HOST+'/apiv2'
     TEXT_SEARCH = '/search/text/'
     CONTENT_SEARCH= '/search/content/'
