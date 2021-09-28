@@ -59,6 +59,7 @@ bl_info = {
     "location": "Sequencer",
     "description": "Connect to freesound to list sounds",
     "wiki_url": "http://freesound.org/apiv2/apply",
+    "tracker_url": "https://blenderartists.org/t/freesound-add-on/671946",
     "support": "COMMUNITY"}
 
 if "bpy" in locals():

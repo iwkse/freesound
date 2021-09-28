@@ -21,7 +21,7 @@ from urllib.parse import urlparse, urlencode, quote, parse_qs
 from urllib.error import HTTPError
 
 class URIS():
-    HOST = 'www.freesound.org'
+    HOST = 'freesound.org'
     BASE =  'https://'+HOST+'/apiv2'
     TEXT_SEARCH = '/search/text/'
     CONTENT_SEARCH= '/search/content/'
@@ -163,7 +163,7 @@ class FreesoundObject:
     def __init__(self,json_dict, client):
         self.client=client
         def replace_dashes(d):
-            for k, v in d.items():
+            for k, v in list(d.items()):
                 if "-" in k:
                     d[k.replace("-","_")] = d[k]
                     del d[k]

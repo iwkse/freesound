@@ -6,7 +6,7 @@ An API key is required: you can request it from http://freesound.org/apiv2/apply
 The plugin documentation button opens the API freesound page as well.
 
 # Installation
-To install the add-on, clone the GIT repository or download the zip and manually install from the user preferences dialog.
+To install the add-on, clone the GIT repository or download the release and manually install from the user preferences dialog.
 
 # Usage
 
