@@ -6,7 +6,7 @@ from bpy.props import BoolProperty, StringProperty, FloatProperty, \
 import webbrowser
 from os.path import dirname, realpath, isfile
 from bpy import ops,context
-import datetime, time
+import datetime
 import aud
 from . import freesound_api
 
