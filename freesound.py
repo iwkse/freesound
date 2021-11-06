@@ -424,8 +424,11 @@ class Freesound_Search(btypes.Operator):
             _sound.name = sound.name
             _sound.author = sound.username
 
-        addon_data.freesound_list_loaded = True
-        bpy.ops.freesound.firstpage()
+        if len(addon_data.freesound_list) > 0:
+            addon_data.freesound_list_loaded = True
+            bpy.ops.freesound.firstpage()
+        else:
+            addon_data.freesound_list_loaded = False
         return {'FINISHED'}
     def get_results_pager(self):
         return self.results_pager
@@ -601,7 +604,6 @@ class Freesound_First(btypes.Operator):
         if (addon_data.freesound_list_loaded):
             results_pager = Freesound_Search.results_pager
             addon_data.pager_num = int(addon_data.sounds/len(addon_data.freesound_list))
-
             addon_data.freesound_list.clear()
             Freesound_Search.results_pager = results_pager.get_page(1)
 
