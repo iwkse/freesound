@@ -6,7 +6,7 @@ from bpy.props import BoolProperty, StringProperty, FloatProperty, \
 import webbrowser
 from os.path import dirname, realpath, isfile
 from bpy import ops,context
-import datetime
+import datetime, time
 import aud
 from . import freesound_api
 
@@ -75,6 +75,7 @@ class Freesound_Play(btypes.Operator):
             sound_id = FREESOUND_UL_List.get_sound_id(FREESOUND_UL_List)
 
             sound_info = client.get_sound(sound_id)
+            
             if (addon_data.high_quality):
                 preview_file = str(sound_info.previews.preview_hq_mp3.split("/")[-1])
             else:
@@ -338,8 +339,9 @@ class Freesound_Add(btypes.Operator):
         if (isfile(dirname(realpath(__file__)) + '/' + preview_file)):
             soundfile = dirname(realpath(__file__)) + '/' + preview_file
         else:
-            soundfile = sound_info.retrieve_preview(dirname(realpath(__file__)),\
-                                                addon_data.high_quality)
+            soundfile = sound_info.retrieve_preview(dirname(realpath(__file__)),
+                                            sound_info.name,
+                                            addon_data.high_quality)
         addon_data.soundfile = soundfile
 
         if not bpy.context.scene.sequence_editor:
