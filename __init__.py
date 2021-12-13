@@ -16,7 +16,7 @@
 #
 # ##### END GPL LICENSE BLOCK #####
 
-import os.path
+import os
 from bpy.utils import register_class, unregister_class
 from bpy.types import Menu
 from bpy.types import Header
@@ -39,6 +39,26 @@ class ApiAddonPreferences(AddonPreferences):
         default = "Get it here http://www.freesound.org/apiv2/apply/"
     )
 
+    freesound_project_folder : BoolProperty(
+        name = "Download alongside blend",
+        default = True,
+        description = "Download from freesound in a specific folder alongside blend file"
+    )
+
+    freesound_project_folder_pattern : StringProperty(
+        name = "Folder name for download",
+        description = "Folder name for download in a specific folder alongside blend file",
+        subtype = 'DIR_PATH',
+        default = "freesound_downloads"
+    )
+
+    freesound_download_folderpath : StringProperty(
+        name = "Download folder path",
+        description = "Folder path where freesound downloads are stored",
+        subtype = 'DIR_PATH',
+        default = os.path.join(bpy.utils.user_resource('DATAFILES'), "freesound_downloads")
+    )
+
     freesound_access : BoolProperty()
 
     def draw(self, context):
@@ -48,12 +68,18 @@ class ApiAddonPreferences(AddonPreferences):
             layout.operator("freesound.validate", text="Validated")
         else:
             layout.operator("freesound.validate", text="Validate your API Key")
-    
+
+        layout.prop(self, "freesound_project_folder")
+        if self.freesound_project_folder:
+            layout.prop(self, "freesound_project_folder_pattern")
+        else:
+            layout.prop(self, "freesound_download_folderpath")
+
 
 bl_info = {
     "name": "Freesound",
-    "author": "Salvatore De Paolis",
-    "version": (2, 0),
+    "author": "Salvatore De Paolis, tin2tin, tonton",
+    "version": (2, 1),
     "blender": (2, 80, 0),
     "category": "Sequencer",
     "location": "Sequencer",

@@ -88,6 +88,7 @@ class Freesound_Play(btypes.Operator):
                     soundfile = sound_info.retrieve_preview(dirname(realpath(__file__)),
                                                     sound_info.name,
                                                     addon_data.high_quality)
+                # soundfile = sound filepath
                 addon_data.soundfile = soundfile
 
             device = aud.Device()
@@ -343,6 +344,7 @@ class Freesound_Add(btypes.Operator):
                                             sound_info.name,
                                             addon_data.high_quality)
         addon_data.soundfile = soundfile
+        # soundfile = sound filepath
 
         if not bpy.context.scene.sequence_editor:
             bpy.context.scene.sequence_editor_create()
