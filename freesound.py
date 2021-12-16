@@ -203,6 +203,16 @@ class FreeSoundData(btypes.PropertyGroup):
         description="The type of license"
     )
 
+    download_location: EnumProperty(
+        items = [
+            ('PROJECT', 'Alongside Project', 'Alongside Project'),
+            ('COMMON', 'Common Folder', 'Common Folder'),
+        ],
+        name="Download Location",
+        default='PROJECT',
+        description="Where to store downloaded sound files"
+    )
+
     current_page: IntProperty(
         description = "Current Pager",
         default=1,

@@ -39,12 +39,6 @@ class ApiAddonPreferences(AddonPreferences):
         default = "Get it here http://www.freesound.org/apiv2/apply/"
     )
 
-    freesound_project_folder : BoolProperty(
-        name = "Download alongside blend",
-        default = True,
-        description = "Download from freesound in a specific folder alongside blend file"
-    )
-
     freesound_project_folder_pattern : StringProperty(
         name = "Folder name for download",
         description = "Folder name for download in a specific folder alongside blend file",
@@ -69,11 +63,8 @@ class ApiAddonPreferences(AddonPreferences):
         else:
             layout.operator("freesound.validate", text="Validate your API Key")
 
-        layout.prop(self, "freesound_project_folder")
-        if self.freesound_project_folder:
-            layout.prop(self, "freesound_project_folder_pattern")
-        else:
-            layout.prop(self, "freesound_download_folderpath")
+        layout.prop(self, "freesound_project_folder_pattern")
+        layout.prop(self, "freesound_download_folderpath")
 
 
 bl_info = {
