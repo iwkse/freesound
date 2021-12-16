@@ -24,12 +24,14 @@ def create_folder(folderpath):
 # build download filepath
 def build_download_filepath(download_location, prefs, file_name):
     if download_location=="PROJECT":
-        if prefs.freesound_project_folder_pattern != "":
+        if prefs.freesound_project_folder_pattern == "":
+            return "pattern_missing"
+        elif not bpy.data.is_saved:
+            return "blend_not_saved"
+        else:
             blend_folder = dirname(bpy.data.filepath)
             freesound_folder = create_folder(join(blend_folder, prefs.freesound_project_folder_pattern))
             sound_filepath = join(freesound_folder, file_name)
-        else:
-            return None
     else:
         freesound_folder = create_folder(prefs.freesound_download_folderpath)
         sound_filepath = join(freesound_folder, file_name)
@@ -96,6 +98,20 @@ class Freesound_Play(btypes.Operator):
 
         sound_name = addon_data.freesound_list[addon_data.active_list_item].name
 
+        # build filepath
+        sound_filepath = build_download_filepath(
+            addon_data.preview_location, 
+            context.preferences.addons[__package__].preferences, 
+            sound_name
+        )
+        # get possible errors
+        if sound_filepath == "blend_not_saved":
+            self.report({'WARNING'}, 'Blend file not saved, unable to store file alongside project')
+            return {'FINISHED'}
+        elif sound_filepath == "pattern_missing":
+            self.report({'WARNING'}, 'No folder pattern specified, check addon preferences')
+            return {'FINISHED'}
+
         addon_data.sound_is_playing = True
         client = Freesound_Validate.get_client(Freesound_Validate)
 
@@ -108,16 +124,6 @@ class Freesound_Play(btypes.Operator):
                 preview_file = str(sound_info.previews.preview_hq_mp3.split("/")[-1])
             else:
                 preview_file = str(sound_info.previews.preview_lq_mp3.split("/")[-1])
-
-            # build filepath
-            sound_filepath = build_download_filepath(
-                addon_data.preview_location, 
-                context.preferences.addons[__package__].preferences, 
-                sound_name
-            )
-            if sound_filepath == None:
-                self.report({'WARNING'}, 'No folder pattern specified, check addon preferences')
-                return {'FINISHED'}
 
             # get file if not existent
             if not isfile(sound_filepath):
@@ -387,10 +393,25 @@ class Freesound_Add(btypes.Operator):
 
     def execute(self, context):
         addon_data = context.scene.freesound_data
+
         if (not addon_data.freesound_list_loaded):
             return {'FINISHED'}
 
         sound_name = addon_data.freesound_list[addon_data.active_list_item].name
+
+        # build filepath
+        sound_filepath = build_download_filepath(
+            addon_data.download_location, 
+            context.preferences.addons[__package__].preferences, 
+            sound_name
+        )
+        # get possible errors
+        if sound_filepath == "blend_not_saved":
+            self.report({'WARNING'}, 'Blend file not saved, unable to store file alongside project')
+            return {'FINISHED'}
+        elif sound_filepath == "pattern_missing":
+            self.report({'WARNING'}, 'No folder pattern specified, check addon preferences')
+            return {'FINISHED'}
 
         sound_id = FREESOUND_UL_List.get_sound_id(FREESOUND_UL_List)
         client = Freesound_Validate.get_client(Freesound_Validate)
@@ -400,16 +421,6 @@ class Freesound_Add(btypes.Operator):
             preview_file = str(sound_info.previews.preview_hq_mp3.split("/")[-1])
         else:
             preview_file = str(sound_info.previews.preview_lq_mp3.split("/")[-1])
-
-        # build filepath
-        sound_filepath = build_download_filepath(
-            addon_data.download_location, 
-            context.preferences.addons[__package__].preferences, 
-            sound_name
-        )
-        if sound_filepath == None:
-            self.report({'WARNING'}, 'No folder pattern specified, check addon preferences')
-            return {'FINISHED'}
 
         # get file if not existent
         if not isfile(sound_filepath):
