@@ -46,8 +46,8 @@ class ApiAddonPreferences(AddonPreferences):
     )
 
     freesound_download_folderpath : StringProperty(
-        name = "Download folder path",
-        description = "Folder path where freesound downloads are stored",
+        name = "Common folder path for download",
+        description = "Common folder path where freesound downloads are stored",
         subtype = 'DIR_PATH',
         default = os.path.join(bpy.utils.user_resource('DATAFILES'), "freesound_downloads")
     )
