@@ -14,6 +14,12 @@ from . import freesound_api
 def get_addon_preferences():
     addon = bpy.context.preferences.addons.get(__package__)
     return getattr(addon, "preferences", None)        
+    
+# create folder if needed
+def create_folder(folderpath):
+    if not os.path.isdir(folderpath):
+        os.makedirs(folderpath, exist_ok=True)
+    return folderpath
 
 
 class FREESOUND_UL_List(btypes.UIList):
