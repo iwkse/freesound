@@ -94,6 +94,8 @@ class Freesound_Play(btypes.Operator):
         if (not addon_data.freesound_list_loaded):
             return {'FINISHED'}
 
+        sound_name = addon_data.freesound_list[addon_data.active_list_item].name
+
         addon_data.sound_is_playing = True
         client = Freesound_Validate.get_client(Freesound_Validate)
 
@@ -107,22 +109,34 @@ class Freesound_Play(btypes.Operator):
             else:
                 preview_file = str(sound_info.previews.preview_lq_mp3.split("/")[-1])
 
-            if (preview_file):
-                if (isfile(dirname(realpath(__file__)) + '/' + preview_file)):
-                    soundfile = dirname(realpath(__file__)) + '/' + preview_file
-                else:
-                    soundfile = sound_info.retrieve_preview(dirname(realpath(__file__)),
-                                                    sound_info.name,
-                                                    addon_data.high_quality)
-                # soundfile = sound filepath
-                addon_data.soundfile = soundfile
+            # build filepath
+            sound_filepath = build_download_filepath(
+                addon_data.preview_location, 
+                context.preferences.addons[__package__].preferences, 
+                sound_name
+            )
+            if sound_filepath == None:
+                self.report({'WARNING'}, 'No folder pattern specified, check addon preferences')
+                return {'FINISHED'}
+
+            # get file if not existent
+            if not isfile(sound_filepath):
+                print("Freesound Addon --- Downloading File : %s" % sound_name)
+                sound_filepath = sound_info.retrieve_preview(dirname(sound_filepath),
+                                            sound_info.name,
+                                            addon_data.high_quality)
+
+            addon_data.soundfile = sound_filepath
+
+            print("Freesound Addon --- Playing File : %s" % sound_name)
 
             device = aud.Device()
-            sound = aud.Sound.file(soundfile)
+            sound = aud.Sound.file(sound_filepath)
             Freesound_Play.handle = device.play(sound)
             Freesound_Play.handle.loop_count = -1
+
         except:
-            print("[Play] Search something first...")
+            self.report({'WARNING'}, '[Play] Search something first...')
             return {'CANCELLED'}
 
         return {'FINISHED'}
@@ -227,6 +241,16 @@ class FreeSoundData(btypes.PropertyGroup):
         name="",
         default='ALL',
         description="The type of license"
+    )
+
+    preview_location: EnumProperty(
+        items = [
+            ('PROJECT', 'Alongside Project', 'Alongside Project'),
+            ('COMMON', 'Common Folder', 'Common Folder'),
+        ],
+        name="Preview Location",
+        default='COMMON',
+        description="Where to store downloaded preview sound files"
     )
 
     download_location: EnumProperty(

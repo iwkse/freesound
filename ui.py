@@ -56,9 +56,11 @@ class FREESOUND_PT_Panel(Panel):
 
         if (addon_prefs.freesound_access == True):
 
-            layout.prop(addon_data, "download_location")
-
             col = layout.column(align=True)
+
+            col.prop(addon_data, "preview_location")
+            col.prop(addon_data, "download_location")
+            col.separator()
 
             split2 = col.row(align=True)
             split2.prop(
