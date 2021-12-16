@@ -4,7 +4,7 @@ import bpy.types as btypes
 from bpy.props import BoolProperty, StringProperty, FloatProperty, \
                       EnumProperty, IntProperty, CollectionProperty
 import webbrowser
-from os.path import dirname, realpath, isfile
+from os.path import dirname, realpath, isfile, isdir, join, basename
 from bpy import ops,context
 import datetime, time
 import aud
@@ -17,7 +17,7 @@ def get_addon_preferences():
 
 # create folder if needed
 def create_folder(folderpath):
-    if not os.path.isdir(folderpath):
+    if not isdir(folderpath):
         os.makedirs(folderpath, exist_ok=True)
     return folderpath
 
@@ -25,14 +25,14 @@ def create_folder(folderpath):
 def build_download_filepath(download_location, prefs, file_name):
     if download_location=="PROJECT":
         if prefs.freesound_project_folder_pattern != "":
-            blend_folder = os.path.dirname(bpy.data.filepath)
-            freesound_folder = os.path.join(blend_folder, prefs.freesound_project_folder_pattern)
-            sound_filepath = os.path.join(freesound_folder, file_name)
+            blend_folder = dirname(bpy.data.filepath)
+            freesound_folder = create_folder(join(blend_folder, prefs.freesound_project_folder_pattern))
+            sound_filepath = join(freesound_folder, file_name)
         else:
             return None
     else:
         freesound_folder = create_folder(prefs.freesound_download_folderpath)
-        sound_filepath = os.path.join(freesound_folder, file_name)
+        sound_filepath = join(freesound_folder, file_name)
     
     return sound_filepath
 
@@ -362,7 +362,6 @@ class Freesound_Add(btypes.Operator):
     # poll out if project location and not saved
 
     def execute(self, context):
-        prefs = get_addon_preferences()
         addon_data = context.scene.freesound_data
         if (not addon_data.freesound_list_loaded):
             return {'FINISHED'}
@@ -376,19 +375,19 @@ class Freesound_Add(btypes.Operator):
         else:
             preview_file = str(sound_info.previews.preview_lq_mp3.split("/")[-1])
 
+        # build filepath
         sound_filepath = build_download_filepath(addon_data.download_location, get_addon_preferences(), preview_file)
         if sound_filepath == None:
             self.report({'WARNING'}, 'No folder pattern specified, check addon preferences')
             return {'FINISHED'}
-        
-        if (isfile(dirname(realpath(__file__)) + '/' + preview_file)):
-            soundfile = dirname(realpath(__file__)) + '/' + preview_file
-        else:
-            soundfile = sound_info.retrieve_preview(dirname(realpath(__file__)),
-                                            sound_info.name,
-                                            addon_data.high_quality)
-        addon_data.soundfile = soundfile
-        # soundfile = sound filepath
+
+        # get file if not existent
+        if not isfile(sound_filepath):
+            sound_filepath = sound_info.retrieve_preview(dirname(sound_filepath),
+                                        sound_info.name,
+                                        addon_data.high_quality)
+                                        
+        addon_data.soundfile = sound_filepath
 
         if not bpy.context.scene.sequence_editor:
             bpy.context.scene.sequence_editor_create()
@@ -405,7 +404,7 @@ class Freesound_Add(btypes.Operator):
             empty_channel = channels[-1] + 1
             addSceneChannel = empty_channel
 
-        name = os.path.basename(addon_data.soundfile)
+        name = basename(addon_data.soundfile)
         newStrip = seq.sequences.new_sound(name=name, filepath=addon_data.soundfile, \
                                     channel=addSceneChannel, frame_start=cf)
         seq.sequences_all[newStrip.name].frame_start = cf
