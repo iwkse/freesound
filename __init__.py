@@ -42,7 +42,6 @@ class ApiAddonPreferences(AddonPreferences):
     freesound_project_folder_pattern : StringProperty(
         name = "Folder name for download",
         description = "Folder name for download in a specific folder alongside blend file",
-        subtype = 'DIR_PATH',
         default = "freesound_downloads"
     )
 
@@ -57,14 +56,17 @@ class ApiAddonPreferences(AddonPreferences):
 
     def draw(self, context):
         layout = self.layout
-        layout.prop(self, "freesound_api")
-        if (self.freesound_access):
-            layout.operator("freesound.validate", text="Validated")
-        else:
-            layout.operator("freesound.validate", text="Validate your API Key")
 
-        layout.prop(self, "freesound_project_folder_pattern")
-        layout.prop(self, "freesound_download_folderpath")
+        box = layout.box()
+        box.prop(self, "freesound_api")
+        if (self.freesound_access):
+            box.operator("freesound.validate", text="Validated")
+        else:
+            box.operator("freesound.validate", text="Validate your API Key")
+
+        box = layout.box()
+        box.prop(self, "freesound_project_folder_pattern")
+        box.prop(self, "freesound_download_folderpath")
 
 
 bl_info = {
