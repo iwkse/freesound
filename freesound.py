@@ -366,6 +366,8 @@ class Freesound_Add(btypes.Operator):
         if (not addon_data.freesound_list_loaded):
             return {'FINISHED'}
 
+        sound_name = addon_data.freesound_list[addon_data.active_list_item].name
+
         sound_id = FREESOUND_UL_List.get_sound_id(FREESOUND_UL_List)
         client = Freesound_Validate.get_client(Freesound_Validate)
         sound_info = client.get_sound(sound_id)
@@ -376,18 +378,25 @@ class Freesound_Add(btypes.Operator):
             preview_file = str(sound_info.previews.preview_lq_mp3.split("/")[-1])
 
         # build filepath
-        sound_filepath = build_download_filepath(addon_data.download_location, get_addon_preferences(), preview_file)
+        sound_filepath = build_download_filepath(
+            addon_data.download_location, 
+            context.preferences.addons[__package__].preferences, 
+            sound_name
+        )
         if sound_filepath == None:
             self.report({'WARNING'}, 'No folder pattern specified, check addon preferences')
             return {'FINISHED'}
 
         # get file if not existent
         if not isfile(sound_filepath):
+            print("Freesound Addon --- Downloading File : %s" % sound_name)
             sound_filepath = sound_info.retrieve_preview(dirname(sound_filepath),
                                         sound_info.name,
                                         addon_data.high_quality)
                                         
         addon_data.soundfile = sound_filepath
+
+        print("Freesound Addon --- Adding Sound Strip : %s" % sound_name)
 
         if not bpy.context.scene.sequence_editor:
             bpy.context.scene.sequence_editor_create()
