@@ -14,13 +14,27 @@ from . import freesound_api
 def get_addon_preferences():
     addon = bpy.context.preferences.addons.get(__package__)
     return getattr(addon, "preferences", None)        
-    
+
 # create folder if needed
 def create_folder(folderpath):
     if not os.path.isdir(folderpath):
         os.makedirs(folderpath, exist_ok=True)
     return folderpath
 
+# build download filepath
+def build_download_filepath(download_location, prefs, file_name):
+    if download_location=="PROJECT":
+        if prefs.freesound_project_folder_pattern != "":
+            blend_folder = os.path.dirname(bpy.data.filepath)
+            freesound_folder = os.path.join(blend_folder, prefs.freesound_project_folder_pattern)
+            sound_filepath = os.path.join(freesound_folder, file_name)
+        else:
+            return None
+    else:
+        freesound_folder = create_folder(prefs.freesound_download_folderpath)
+        sound_filepath = os.path.join(freesound_folder, file_name)
+    
+    return sound_filepath
 
 class FREESOUND_UL_List(btypes.UIList):
     sound_id = 0
@@ -362,20 +376,11 @@ class Freesound_Add(btypes.Operator):
         else:
             preview_file = str(sound_info.previews.preview_lq_mp3.split("/")[-1])
 
-        # build filepath
-        if addon_data.download_location=="PROJECT":
-            if prefs.freesound_project_folder_pattern != "":
-                blend_folder = os.path.dirname(bpy.data.filepath)
-                freesound_folder = os.path.join(blend_folder, prefs.freesound_project_folder_pattern)
-                sound_filepath = os.path.join(freesound_folder, preview_file)
-            else:
-                self.report({'WARNING'}, 'No folder pattern specified, check addon preferences')
-                return {'FINISHED'}
-        else:
-            # create dir if needed
-            freesound_folder = prefs.freesound_download_folderpath
-            sound_filepath = os.path.join(freesound_folder, preview_file)
-
+        sound_filepath = build_download_filepath(addon_data.download_location, get_addon_preferences(), preview_file)
+        if sound_filepath == None:
+            self.report({'WARNING'}, 'No folder pattern specified, check addon preferences')
+            return {'FINISHED'}
+        
         if (isfile(dirname(realpath(__file__)) + '/' + preview_file)):
             soundfile = dirname(realpath(__file__)) + '/' + preview_file
         else:
