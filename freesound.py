@@ -10,6 +10,12 @@ import datetime, time
 import aud
 from . import freesound_api
 
+# get addon preferences
+def get_addon_preferences():
+    addon = bpy.context.preferences.addons.get(__package__)
+    return getattr(addon, "preferences", None)        
+
+
 class FREESOUND_UL_List(btypes.UIList):
     sound_id = 0
     avg_rating = 0
@@ -333,7 +339,10 @@ class Freesound_Add(btypes.Operator):
     bl_description = 'Add sound to the VSE at current frame'
     bl_options = {'REGISTER', 'UNDO'}
 
+    # poll out if project location and not saved
+
     def execute(self, context):
+        prefs = get_addon_preferences()
         addon_data = context.scene.freesound_data
         if (not addon_data.freesound_list_loaded):
             return {'FINISHED'}
