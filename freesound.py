@@ -356,6 +356,20 @@ class Freesound_Add(btypes.Operator):
         else:
             preview_file = str(sound_info.previews.preview_lq_mp3.split("/")[-1])
 
+        # build filepath
+        if addon_data.download_location=="PROJECT":
+            if prefs.freesound_project_folder_pattern != "":
+                blend_folder = os.path.dirname(bpy.data.filepath)
+                freesound_folder = os.path.join(blend_folder, prefs.freesound_project_folder_pattern)
+                sound_filepath = os.path.join(freesound_folder, preview_file)
+            else:
+                self.report({'WARNING'}, 'No folder pattern specified, check addon preferences')
+                return {'FINISHED'}
+        else:
+            # create dir if needed
+            freesound_folder = prefs.freesound_download_folderpath
+            sound_filepath = os.path.join(freesound_folder, preview_file)
+
         if (isfile(dirname(realpath(__file__)) + '/' + preview_file)):
             soundfile = dirname(realpath(__file__)) + '/' + preview_file
         else:
