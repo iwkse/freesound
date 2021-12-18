@@ -25,6 +25,7 @@ import datetime
 class FREESOUND_PT_Panel(Panel):
     """Creates a Panel in the Object properties window"""
     bl_label = "Freesound"
+    bl_category = "Audio"
     bl_space_type = 'SEQUENCE_EDITOR'
     bl_region_type = 'UI'
 
