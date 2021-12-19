@@ -18,9 +18,7 @@
 
 import bpy
 from bpy.types import Panel
-from . import freesound_api
-from . import freesound
-import datetime
+
 
 class FREESOUND_Panel(Panel):
     bl_space_type = 'SEQUENCE_EDITOR'
