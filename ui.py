@@ -188,7 +188,6 @@ class FREESOUND_PT_subpanel_search(FREESOUND_Panel):
 class FREESOUND_PT_subpanel_settings(FREESOUND_Panel):
     bl_parent_id = "FREESOUND_PT_Panel"
     bl_label = "Scene Settings"
-    bl_options = {'DEFAULT_CLOSED'}
 
     def draw(self, context):
         addon_data = context.scene.freesound_data
