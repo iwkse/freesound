@@ -48,13 +48,18 @@ class FREESOUND_PT_Panel(FREESOUND_Panel):
         layout = self.layout
 
         if not addon_prefs.freesound_access:
-            layout.label(text="No Valid Freesound Credentials")
-            layout.label(text="Check Addon Preferences")            
+            col = layout.column(align=True)
+            col.label(text="No Valid Freesound Credentials", icon="ERROR")
+            col.label(text="Check Addon Preferences")            
 
 
 class FREESOUND_PT_subpanel_search(FREESOUND_Panel):
     bl_parent_id = "FREESOUND_PT_Panel"
     bl_label = "Search"
+
+    @classmethod
+    def poll(cls, context):
+        return bpy.context.preferences.addons[__package__].preferences.freesound_access
 
     def draw(self, context):
         layout = self.layout
