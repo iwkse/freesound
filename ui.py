@@ -22,12 +22,14 @@ from . import freesound_api
 from . import freesound
 import datetime
 
-class FREESOUND_PT_Panel(Panel):
-    """Creates a Panel in the Object properties window"""
-    bl_label = "Freesound"
-    bl_category = "Audio"
+class FREESOUND_Panel(Panel):
     bl_space_type = 'SEQUENCE_EDITOR'
     bl_region_type = 'UI'
+
+
+class FREESOUND_PT_Panel(FREESOUND_Panel):
+    """Creates a Panel in the Object properties window"""
+    bl_label = "Freesound"
 
     @staticmethod
     def has_sequencer(context):
@@ -43,25 +45,31 @@ class FREESOUND_PT_Panel(Panel):
         layout.label(text="")
 
     def draw(self, context):
+        addon_prefs =  bpy.context.preferences.addons[__package__].preferences
+
+        layout = self.layout
+
+        if not addon_prefs.freesound_access:
+            layout.label(text="No Valid Freesound Credentials")
+            layout.label(text="Check Addon Preferences")            
+
+
+class FREESOUND_PT_subpanel_search(FREESOUND_Panel):
+    bl_parent_id = "FREESOUND_PT_Panel"
+    bl_label = "Search"
+
+    def draw(self, context):
         layout = self.layout
         layout.use_property_split = True
         layout.use_property_decorate = False
-        sce = context.scene
 
-        frame_current = sce.frame_current
         addon_data = context.scene.freesound_data
         split = layout.split(factor=0.8, align=True)
         addon_prefs =  bpy.context.preferences.addons[__package__].preferences
 
-
         if (addon_prefs.freesound_access == True):
 
             col = layout.column(align=True)
-
-            col.prop(addon_data, "preview_location")
-            col.prop(addon_data, "download_location")
-            col.separator()
-
             split2 = col.row(align=True)
             split2.prop(
                 addon_data,
@@ -171,3 +179,21 @@ class FREESOUND_PT_Panel(Panel):
             split = split.split(factor=0.6, align=True)
             split.alignment = 'LEFT'                
             split.label(text=author)
+
+
+class FREESOUND_PT_subpanel_settings(FREESOUND_Panel):
+    bl_parent_id = "FREESOUND_PT_Panel"
+    bl_label = "Scene Settings"
+    bl_options = {'DEFAULT_CLOSED'}
+
+    def draw(self, context):
+        addon_data = context.scene.freesound_data
+
+        layout = self.layout
+
+        box = layout.box()
+        box.label(text="Download Locations")
+
+        col = box.column(align=True)
+        col.prop(addon_data, "preview_location", text="Preview")
+        col.prop(addon_data, "download_location", text="Download")

@@ -23,7 +23,7 @@ from bpy.types import Header
 from bpy.types import Scene
 from bpy.types import Operator, AddonPreferences
 from bpy.props import StringProperty, BoolProperty, PointerProperty
-from .ui import FREESOUND_PT_Panel
+from .ui import *
 from .freesound import *
 
 class ApiAddonPreferences(AddonPreferences):
@@ -107,6 +107,8 @@ classes = (
         Freesound_First,
         Freesound_Pause,
         FREESOUND_PT_Panel,
+        FREESOUND_PT_subpanel_search,
+        FREESOUND_PT_subpanel_settings,
 )
 
 # Registration
