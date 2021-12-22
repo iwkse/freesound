@@ -19,7 +19,6 @@
 import bpy
 from bpy.types import Panel
 
-
 class FREESOUND_Panel(Panel):
     bl_space_type = 'SEQUENCE_EDITOR'
     bl_region_type = 'UI'
@@ -29,7 +28,7 @@ class FREESOUND_Panel(Panel):
 class FREESOUND_PT_Panel(FREESOUND_Panel):
     """Creates a Panel in the Object properties window"""
     bl_label = "Freesound"
-    
+
     @staticmethod
     def has_sequencer(context):
         return (context.space_data.view_type\
