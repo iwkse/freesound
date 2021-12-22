@@ -71,7 +71,7 @@ class ApiAddonPreferences(AddonPreferences):
 
 bl_info = {
     "name": "Freesound",
-    "author": "Salvatore De Paolis, tin2tin, tonton",
+    "author": "Salvatore De Paolis",
     "version": (2, 1),
     "blender": (2, 80, 0),
     "category": "Sequencer",
