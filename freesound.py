@@ -244,8 +244,8 @@ class FreeSoundData(btypes.PropertyGroup):
 
     preview_location: EnumProperty(
         items = [
-            ('PROJECT', 'Alongside Project', 'Alongside Project'),
-            ('COMMON', 'Common Folder', 'Common Folder'),
+            ('PROJECT', 'Project Directory', 'Preview will be stored in the project directory'),
+            ('COMMON', 'Common Directory', 'Preview will be stored in a common directory specified in preferences'),
         ],
         name="Preview Location",
         default='COMMON',
@@ -254,8 +254,8 @@ class FreeSoundData(btypes.PropertyGroup):
 
     download_location: EnumProperty(
         items = [
-            ('PROJECT', 'Alongside Project', 'Alongside Project'),
-            ('COMMON', 'Common Folder', 'Common Folder'),
+            ('PROJECT', 'Project Directory', 'Preview will be stored in the Project Directory'),
+            ('COMMON', 'Common Directory', 'Preview will be stored in a common directory specified in preferences'),
         ],
         name="Download Location",
         default='PROJECT',
