@@ -10,14 +10,11 @@ import datetime, time
 import aud
 from . import freesound_api
 
-
-# create folder if needed
 def create_folder(folderpath):
     if not isdir(folderpath):
         os.makedirs(folderpath, exist_ok=True)
     return folderpath
 
-# build download filepath
 def build_download_filepath(download_location, prefs, file_name):
     if download_location=="PROJECT":
         if prefs.freesound_project_folder_pattern == "":
@@ -33,7 +30,6 @@ def build_download_filepath(download_location, prefs, file_name):
         sound_filepath = join(freesound_folder, file_name)
     
     return sound_filepath
-
 
 class FREESOUND_UL_List(btypes.UIList):
     sound_id = 0
