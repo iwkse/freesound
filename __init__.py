@@ -16,7 +16,7 @@
 #
 # ##### END GPL LICENSE BLOCK #####
 
-import os
+from os.path import join
 from bpy.utils import register_class, unregister_class
 from bpy.types import Menu
 from bpy.types import Header
@@ -49,7 +49,7 @@ class ApiAddonPreferences(AddonPreferences):
         name = "Common folder path for download",
         description = "Common folder path where freesound downloads are stored",
         subtype = 'DIR_PATH',
-        default = os.path.join(bpy.utils.user_resource('DATAFILES'), "freesound_downloads")
+        default = join(bpy.utils.user_resource('DATAFILES'), "freesound_downloads")
     )
 
     freesound_access : BoolProperty()
