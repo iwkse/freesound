@@ -82,9 +82,9 @@ bl_info = {
     "support": "COMMUNITY"}
 
 if "bpy" in locals():
-    import imp
+    import importlib
     from . import ui
-    imp.reload(ui)
+    importlib.reload(ui)
 else:
     from . import ui
 

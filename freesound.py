@@ -429,7 +429,15 @@ class Freesound_Add(btypes.Operator):
         scn = bpy.context.scene
         seq = scn.sequence_editor
         cf = scn.frame_current
-        sequences = bpy.context.sequences
+        # Blender 4.4 renamed "sequences" to "strips"; the old names were removed in 5.0
+        if hasattr(seq, "strips"):
+            sequences = bpy.context.strips
+            strips = seq.strips
+            strips_all = seq.strips_all
+        else:
+            sequences = bpy.context.sequences
+            strips = seq.sequences
+            strips_all = seq.sequences_all
 
         if not sequences:
             addSceneChannel = 1
@@ -440,9 +448,9 @@ class Freesound_Add(btypes.Operator):
             addSceneChannel = empty_channel
 
         name = basename(addon_data.soundfile)
-        newStrip = seq.sequences.new_sound(name=name, filepath=addon_data.soundfile, \
+        newStrip = strips.new_sound(name=name, filepath=addon_data.soundfile, \
                                     channel=addSceneChannel, frame_start=cf)
-        seq.sequences_all[newStrip.name].frame_start = cf
+        strips_all[newStrip.name].frame_start = cf
         return {'FINISHED'}
 
 # Freesound Search
