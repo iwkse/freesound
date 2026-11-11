@@ -6,7 +6,7 @@ import bpy.types as btypes
 from bpy.props import BoolProperty, StringProperty, FloatProperty, \
                       EnumProperty, IntProperty, CollectionProperty
 import webbrowser
-from os.path import dirname, realpath, isfile, isdir, join
+from os.path import dirname, isfile, isdir, join
 from urllib.parse import quote
 import aud
 from . import freesound_api
@@ -50,6 +50,14 @@ def get_active_item(addon_data):
     if 0 <= index < len(addon_data.freesound_list):
         return addon_data.freesound_list[index]
     return None
+
+def online_access_error():
+    """Return an error message when Blender is not allowed to go online (Blender 4.2+)."""
+    if getattr(bpy.app, "online_access", True):
+        return None
+    if getattr(bpy.app, "online_access_override", False):
+        return 'Online access is disabled from the command line'
+    return 'Online access is disabled, enable it in Preferences > System > Network'
 
 def get_client(context):
     client = Freesound_Validate.client
@@ -111,6 +119,10 @@ def go_to_page(addon_data, page):
     set_current_page(addon_data, page)
 
 def run_page_change(operator, context, page):
+    offline = online_access_error()
+    if offline:
+        operator.report({'WARNING'}, offline)
+        return {'CANCELLED'}
     try:
         go_to_page(context.scene.freesound_data, page)
     except Exception as e:
@@ -139,6 +151,10 @@ def get_preview(operator, context, location):
         return None
 
     if not isfile(sound_filepath):
+        offline = online_access_error()
+        if offline:
+            operator.report({'WARNING'}, offline)
+            return None
         print("Freesound Addon --- Downloading File : %s" % item.name)
         try:
             sound_info = get_client(context).get_sound(item.sound_id)
@@ -250,7 +266,7 @@ class FreeSoundItem(btypes.PropertyGroup):
 # Definess one instance of the addon data (one per scene)
 class FreeSoundData(btypes.PropertyGroup):
     def update_page(self, context):
-        if _setting_page:
+        if _setting_page or online_access_error():
             return None
         try:
             go_to_page(self, self.current_page)
@@ -340,7 +356,7 @@ class FreeSoundData(btypes.PropertyGroup):
     soundfile: StringProperty(
         name="Sound Path",
         description="Path to the file",
-        default=dirname(realpath(__file__))
+        default=""
     )
     sound_is_playing: BoolProperty(
         description = 'Sound is playing'
@@ -388,6 +404,10 @@ class Freesound_Validate(btypes.Operator):
             self.report({'WARNING'}, 'Insert your Freesound API key first')
             return {'CANCELLED'}
         self.client.set_token(api_key)
+        offline = online_access_error()
+        if offline:
+            self.report({'WARNING'}, offline)
+            return {'CANCELLED'}
         try:
             addon_prefs.freesound_access = self.client.check_access()
         except Exception as e:
@@ -477,6 +497,11 @@ class Freesound_Search(btypes.Operator):
             filter_string=duration + ' license:"' + addon_data.license + '"'
         else:
             filter_string=duration
+
+        offline = online_access_error()
+        if offline:
+            self.report({'WARNING'}, offline)
+            return {'CANCELLED'}
 
         rating = addon_data.search_filter
         addon_data.freesound_loading = True

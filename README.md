@@ -15,7 +15,13 @@ The plugin documentation button opens the API freesound page as well.
 - Rating shows full and half stars and the number of ratings.
 
 # Installation
-To install the add-on, clone the GIT repository or download the release and manually install from the user preferences dialog.
+**Blender 4.2 and later:** install it as an extension, from the Blender Extensions platform (Preferences > Get Extensions, search "Freesound") or from the release zip with Preferences > Add-ons > Install from Disk. Searching and downloading require "Allow Online Access" in Preferences > System > Network.
+
+**Blender 2.80 to 4.1:** clone the GIT repository or download the release and manually install it from the user preferences dialog as a legacy add-on.
+
+To build the extension package yourself:
+
+    blender --command extension build --source-dir . --output-dir dist
 
 # Usage
 

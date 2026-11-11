@@ -1,0 +1,38 @@
+schema_version = "1.0.0"
+
+id = "freesound"
+version = "3.0.0"
+name = "Freesound"
+tagline = "Search, preview and add Freesound.org sounds in the sequencer"
+maintainer = "Salvatore De Paolis <iwkse@claws-mail.org>"
+type = "add-on"
+
+website = "https://github.com/iwkse/freesound"
+
+tags = ["Sequencer"]
+
+blender_version_min = "4.2.0"
+
+license = [
+  "SPDX:GPL-3.0-or-later",
+]
+copyright = [
+  "2018-2026 Salvatore De Paolis and contributors",
+  "2013-2014 Universitat Pompeu Fabra",
+]
+
+[permissions]
+network = "Search Freesound.org and download sound previews"
+files = "Save downloaded sound previews to disk"
+
+[build]
+paths_exclude_pattern = [
+  "__pycache__/",
+  "/.git/",
+  "/*.zip",
+  "/dist/",
+  ".*",
+  "*.wav",
+  "*.mp3",
+  "*.part",
+]

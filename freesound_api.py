@@ -1,3 +1,24 @@
+# Based on freesound-python (https://github.com/MTG/freesound-python),
+# Copyright (c) 2013-2014 Universitat Pompeu Fabra, released under the MIT License:
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+
 """
 A python client for the Freesound API.
 
@@ -16,7 +37,6 @@ import json
 import ssl
 from os.path import join
 from collections import namedtuple
-import requests
 from urllib.request import urlopen, Request
 from urllib.parse import urlparse, urlencode, quote, parse_qs
 from urllib.error import HTTPError
@@ -25,7 +45,7 @@ from urllib.error import HTTPError
 TIMEOUT = 30
 
 def _ssl_context():
-    # Verify certificates; prefer the CA bundle shipped with requests/certifi,
+    # Verify certificates; prefer the CA bundle shipped with certifi,
     # since some Blender builds cannot find the system certificates.
     try:
         import certifi
@@ -237,13 +257,18 @@ class FSRequest:
 
     @classmethod
     def retrieve(cls, url, client, path):
-        r = requests.get(url, timeout=TIMEOUT)
-        r.raise_for_status()
+        try:
+            f = urlopen(Request(url), context=cls.ctx, timeout=TIMEOUT)
+        except HTTPError as e:
+            raise FreesoundException(e.code, e.reason)
         # Write to a temporary file first, so a failed download never leaves
         # a broken file that would be reused as a cached preview
         tmp_path = path + ".part"
-        with open(tmp_path, 'wb') as audiofile:
-            audiofile.write(r.content)
+        try:
+            with open(tmp_path, 'wb') as audiofile:
+                audiofile.write(f.read())
+        finally:
+            f.close()
         os.replace(tmp_path, path)
         return path
 
