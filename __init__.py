@@ -77,11 +77,17 @@ class ApiAddonPreferences(AddonPreferences):
         box.prop(self, "freesound_project_folder_pattern")
         box.prop(self, "freesound_download_folderpath")
 
+        box = layout.box()
+        box.label(text="Freesound add-on is free. If it helps your work, consider supporting it:", icon='FUND')
+        row = box.row()
+        row.operator("wm.url_open", text="GitHub Sponsors").url = "https://github.com/sponsors/iwkse"
+        row.operator("wm.url_open", text="Ko-fi").url = "https://ko-fi.com/iwkse"
+
 
 bl_info = {
     "name": "Freesound",
     "author": "Salvatore De Paolis",
-    "version": (3, 0, 0),
+    "version": (3, 0, 1),
     "blender": (2, 80, 0),
     "category": "Sequencer",
     "location": "Sequencer",

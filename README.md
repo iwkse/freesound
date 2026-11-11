@@ -51,6 +51,15 @@ The Scene Settings panel sets where previews and added sounds are stored: in a c
 
 Please respect the license of each sound (CC0, CC BY, CC BY-NC...) when using it in your projects.
 
+# Support the project
+
+Freesound add-on is free and open source. If it saves you time, you can support its development:
+
+- [GitHub Sponsors](https://github.com/sponsors/iwkse)
+- [Ko-fi](https://ko-fi.com/iwkse)
+
+You can also find these links in the add-on preferences.
+
 # Contributing
 
 If you have any idea, feel free to fork it and submit your changes back to me.
