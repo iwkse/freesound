@@ -18,6 +18,7 @@
 
 import bpy
 from bpy.types import Panel
+from .freesound import get_active_item, page_count
 
 class FREESOUND_Panel(Panel):
     bl_space_type = 'SEQUENCE_EDITOR'
@@ -98,17 +99,14 @@ class FREESOUND_PT_subpanel_search(FREESOUND_Panel):
             row.operator("freesound.next10page", icon='TRIA_RIGHT', text="")
             row.operator("freesound.lastpage", icon='FF', text="")
 
-            try:
-                pages = int(addon_data.sounds/len(addon_data.freesound_list))
-                row.label(text="of %s" % str(pages))
-            except:
+            if addon_data.freesound_list_loaded:
+                row.label(text="of %s" % page_count(addon_data))
+            else:
                 row.label(text="1 of ...")
-
-            freesound_ptr = bpy.types.AnyType(bpy.context.scene.freesound_data)
 
             row = col_list.row(align=True)
             col = row.column(align=True)
-            col.template_list("FREESOUND_UL_List", "", freesound_ptr, "freesound_list", freesound_ptr, "active_list_item")
+            col.template_list("FREESOUND_UL_List", "", addon_data, "freesound_list", addon_data, "active_list_item")
 
             col = row.column(align=True)
 
@@ -123,65 +121,49 @@ class FREESOUND_PT_subpanel_search(FREESOUND_Panel):
             col.separator()
             col.operator("freesound.info", text="", icon='URL')
 
+            item = get_active_item(addon_data)
+            if item is None:
+                return
+
+            # Ratings go from 0 to 5: draw full and half stars, rounded to the nearest half
+            rating = round(item.avg_rating * 2) / 2
+            stars = []
+            for l in range(5):
+                if l + 1 <= rating:
+                    stars.append('SOLO_ON')
+                elif l + 0.5 == rating:
+                    stars.append('SORTBYEXT')
+                else:
+                    stars.append('SOLO_OFF')
+
             row = col_list.row(align=True)
-            # row.alignment = 'RIGHT'
-            val = [0,1,2,3,4]
-            point_star = 0
-            try:
-                point_star = addon_data.freesound_list[addon_data.active_list_item].avg_rating
-            except:
-                point_star = 0
-            for l in val:
-                if (l <= point_star-1):
-                    val[l] = 'SOLO_ON'
-                elif ((point_star % 1) > 0.5):
-                        val[l] = 'SOLO_OFF'
-                elif ((point_star % 1) <= 0.5 and (point_star % 1) != 0):
-                        val[l] = 'SORTBYEXT'
-                elif ((point_star % 1) == 0):
-                        val[l] = 'SOLO_OFF'
-
-            if (addon_data.freesound_list_loaded):
-                try:
-                    num_ratings = addon_data.freesound_list[addon_data.active_list_item].num_ratings
-                except:
-                    num_ratings = 0
-
-                split = row.split(factor=0.4, align=True)
-                split.alignment = 'RIGHT'
-                split.label(text="Rating ")
-                split = split.split(factor=0.2, align=True)
-                split.alignment = 'RIGHT'
-                split.label(text="", icon=val[0])
-                split.label(text="", icon=val[1])
-                split.label(text="", icon=val[2])
-                split.label(text="", icon=val[3])
-                split.label(text="", icon=val[4])
-
+            split = row.split(factor=0.4, align=True)
+            split.alignment = 'RIGHT'
+            split.label(text="Rating (%s)" % item.num_ratings)
+            split = split.split(factor=0.2, align=True)
+            split.alignment = 'RIGHT'
+            for star in stars:
+                split.label(text="", icon=star)
 
             try:
-                duration = addon_data.freesound_list[addon_data.active_list_item].duration
-            except:
-                duration = 0
+                duration = bpy.utils.smpte_from_seconds(time=float(item.duration))
+            except Exception:
+                duration = "-"
             row = col_list.row(align=True)
             split = row.split(factor=0.4, align=True)
             split.alignment = 'RIGHT'
             split.label(text="Duration")
             split = split.split(factor=0.6, align=True)
             split.alignment = 'LEFT'
-            split.label(text=str(bpy.utils.smpte_from_seconds(time=float(duration))))
+            split.label(text=str(duration))
 
-            try:
-                author = addon_data.freesound_list[addon_data.active_list_item].author
-            except:
-                author = "Unknown"
             row = col_list.row(align=True)
             split = row.split(factor=0.4, align=True)
             split.alignment = 'RIGHT'
             split.label(text="Author")
             split = split.split(factor=0.6, align=True)
-            split.alignment = 'LEFT'                
-            split.label(text=author)
+            split.alignment = 'LEFT'
+            split.label(text=item.author)
 
 
 class FREESOUND_PT_subpanel_settings(FREESOUND_Panel):

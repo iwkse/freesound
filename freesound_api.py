@@ -10,6 +10,7 @@ The client automatically maps function arguments to http parameters of the API. 
 Note that POST resources are not supported. Downloading full quality sounds requires Oauth2 authentication (see http://freesound.org/docs/api/authentication.html). Oauth2 authentication is supported, but you are expected to implement the workflow.
 """
 
+import os
 import re
 import json
 import ssl
@@ -19,6 +20,18 @@ import requests
 from urllib.request import urlopen, Request
 from urllib.parse import urlparse, urlencode, quote, parse_qs
 from urllib.error import HTTPError
+
+# Seconds before a network call gives up, so Blender never hangs forever
+TIMEOUT = 30
+
+def _ssl_context():
+    # Verify certificates; prefer the CA bundle shipped with requests/certifi,
+    # since some Blender builds cannot find the system certificates.
+    try:
+        import certifi
+        return ssl.create_default_context(cafile=certifi.where())
+    except Exception:
+        return ssl.create_default_context()
 
 class URIS():
     HOST = 'freesound.org'
@@ -53,7 +66,7 @@ class URIS():
     @classmethod
     def uri(cls, uri, *args):
         for a in args:
-            uri = re.sub('<[\w_]+>', quote(str(a)), uri, 1)
+            uri = re.sub(r'<[\w_]+>', quote(str(a)), uri, 1)
         return cls.BASE+uri
 
 class FreesoundClient():
@@ -73,11 +86,11 @@ class FreesoundClient():
 
     def check_access(self):
         uri = URIS.uri(URIS.SOUND,6)
-        request = FSRequest.request(uri, {}, self, Sound)
-        if hasattr(request, 'code'):
+        try:
+            FSRequest.request(uri, {}, self, Sound)
+        except FreesoundException:
             return False
-        else:
-            return True
+        return True
 
     def get_sound(self, sound_id):
         """
@@ -190,29 +203,29 @@ class FSRequest:
     """
     Makes requests to the freesound API. Should not be used directly.
     """
-    ctx = ssl.create_default_context()
-    ctx.check_hostname = False
-    ctx.verify_mode = ssl.CERT_NONE
+    ctx = _ssl_context()
 
     @classmethod
     def request(cls, uri, params={}, client=None, wrapper=FreesoundObject, 
                 method='GET', data=False):
         p = params if params else {}
         url = '%s?%s' % (uri, urlencode(p)) if params else uri
-        d = urllib.urlencode(data) if data else None
+        d = urlencode(data).encode("utf-8") if data else None
         headers = {'Authorization':client.header}
         req = Request(url,d,headers)
         try:
-            f = urlopen(req, context=cls.ctx)
+            f = urlopen(req, context=cls.ctx, timeout=TIMEOUT)
         except HTTPError as e:
             resp = e.read()
-            if e.code >= 200 and e.code < 300:
-                return resp
-            else:
-                return FreesoundException(e.code, 
-                                          json.loads(resp.decode("utf-8")))
-        resp = f.read()
-        f.close()
+            try:
+                detail = json.loads(resp.decode("utf-8"))
+            except Exception:
+                detail = resp.decode("utf-8", "replace")
+            raise FreesoundException(e.code, detail)
+        try:
+            resp = f.read()
+        finally:
+            f.close()
         result = None
         try:
             result = json.loads(resp.decode("utf-8"))
@@ -224,9 +237,14 @@ class FSRequest:
 
     @classmethod
     def retrieve(cls, url, client, path):
-        r = requests.get(url)
-        with open (path, 'wb') as audiofile:
+        r = requests.get(url, timeout=TIMEOUT)
+        r.raise_for_status()
+        # Write to a temporary file first, so a failed download never leaves
+        # a broken file that would be reused as a cached preview
+        tmp_path = path + ".part"
+        with open(tmp_path, 'wb') as audiofile:
             audiofile.write(r.content)
+        os.replace(tmp_path, path)
         return path
 
 class Pager(FreesoundObject):
@@ -248,20 +266,17 @@ class Pager(FreesoundObject):
         """
         return FSRequest.request(self.previous, {}, self.client, Pager)
     def get_page(self, n):
-        url = self.next
-        
-        uri = urlparse(url)
-        for index,item in enumerate(uri):
-            if ('query' in item):
-                urid=index
-
-        query = uri[urid].split("&")
-
-        for index,item in enumerate(query):
-            if ("page" in item):
-                query[index] = 'page=' + str(n)
-
-        url = uri[0] + '://' + uri[1] + uri[2] + '?' + "&".join(query)
+        """
+        Get a Pager with the results page number n.
+        """
+        # The last page has no "next" link and the first has no "previous" one
+        ref = self.next or self.previous
+        if not ref:
+            return self
+        uri = urlparse(ref)
+        query = parse_qs(uri.query, keep_blank_values=True)
+        query['page'] = [str(n)]
+        url = uri._replace(query=urlencode(query, doseq=True)).geturl()
         return FSRequest.request(url, {}, self.client, Pager)
 
 class GenericPager(Pager):

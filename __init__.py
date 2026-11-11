@@ -16,6 +16,13 @@
 #
 # ##### END GPL LICENSE BLOCK #####
 
+# Reload the submodules when Blender reloads the add-on (F8 / Reload Scripts)
+if "freesound_api" in locals():
+    import importlib
+    importlib.reload(freesound_api)
+    importlib.reload(freesound)
+    importlib.reload(ui)
+
 from os.path import join
 from bpy.utils import register_class, unregister_class
 from bpy.types import Menu
@@ -35,8 +42,8 @@ class ApiAddonPreferences(AddonPreferences):
     freesound_api : StringProperty(
         subtype = "PASSWORD",
         name = "Insert your API Key",
-        description = "Your freesound API Key.",
-        default = "Get it here http://www.freesound.org/apiv2/apply/"
+        description = "Your freesound API Key. Get it at https://freesound.org/apiv2/apply/",
+        default = ""
     )
 
     freesound_project_folder_pattern : StringProperty(
@@ -59,6 +66,8 @@ class ApiAddonPreferences(AddonPreferences):
 
         box = layout.box()
         box.prop(self, "freesound_api")
+        if not self.freesound_api:
+            box.label(text="Get your API key at https://freesound.org/apiv2/apply/", icon='INFO')
         if (self.freesound_access):
             box.operator("freesound.validate", text="Validated")
         else:
@@ -72,21 +81,15 @@ class ApiAddonPreferences(AddonPreferences):
 bl_info = {
     "name": "Freesound",
     "author": "Salvatore De Paolis",
-    "version": (2, 1),
+    "version": (3, 0, 0),
     "blender": (2, 80, 0),
     "category": "Sequencer",
     "location": "Sequencer",
     "description": "Connect to freesound to list sounds",
-    "wiki_url": "http://freesound.org/apiv2/apply",
+    "doc_url": "https://freesound.org/apiv2/apply",
+    "wiki_url": "https://freesound.org/apiv2/apply",
     "tracker_url": "https://blenderartists.org/t/freesound-add-on/671946",
     "support": "COMMUNITY"}
-
-if "bpy" in locals():
-    import importlib
-    from . import ui
-    importlib.reload(ui)
-else:
-    from . import ui
 
 classes = (
         ApiAddonPreferences,
@@ -118,7 +121,9 @@ def register():
 # Extend the scene class here to include the addon data
     Scene.freesound_data = PointerProperty(type=FreeSoundData)
 def unregister():
-    for cls in classes:
+    if hasattr(Scene, "freesound_data"):
+        del Scene.freesound_data
+    for cls in reversed(classes):
         unregister_class(cls)
 
 if __name__ == '__main__':

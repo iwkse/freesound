@@ -1,14 +1,18 @@
 import os
+import re
+import math
 import bpy
 import bpy.types as btypes
 from bpy.props import BoolProperty, StringProperty, FloatProperty, \
                       EnumProperty, IntProperty, CollectionProperty
 import webbrowser
-from os.path import dirname, realpath, isfile, isdir, join, basename
-from bpy import ops,context
-import datetime, time
+from os.path import dirname, realpath, isfile, isdir, join
+from urllib.parse import quote
 import aud
 from . import freesound_api
+
+# Highest channel available in the sequencer
+MAX_CHANNEL = 128
 
 def create_folder(folderpath):
     if not isdir(folderpath):
@@ -26,29 +30,129 @@ def build_download_filepath(download_location, prefs, file_name):
             freesound_folder = create_folder(join(blend_folder, prefs.freesound_project_folder_pattern))
             sound_filepath = join(freesound_folder, file_name)
     else:
-        freesound_folder = create_folder(prefs.freesound_download_folderpath)
+        freesound_folder = create_folder(bpy.path.abspath(prefs.freesound_download_folderpath))
         sound_filepath = join(freesound_folder, file_name)
-    
+
+    return sound_filepath
+
+def preview_file_name(item, high_quality):
+    # Sound id and quality keep different sounds with the same name, and the
+    # HQ/LQ previews of the same sound, from overwriting each other
+    name = re.sub(r'[^\w\-. ]', '_', os.path.splitext(item.name)[0]).strip()
+    return "%s_%s_%s.mp3" % (item.sound_id,
+                             "hq" if high_quality else "lq",
+                             name[:80] or "sound")
+
+def get_active_item(addon_data):
+    if not addon_data.freesound_list_loaded:
+        return None
+    index = addon_data.active_list_item
+    if 0 <= index < len(addon_data.freesound_list):
+        return addon_data.freesound_list[index]
+    return None
+
+def get_client(context):
+    client = Freesound_Validate.client
+    if not client.token:
+        prefs = context.preferences.addons[__package__].preferences
+        client.set_token(prefs.freesound_api)
+    return client
+
+def error_message(error):
+    if isinstance(error, freesound_api.FreesoundException):
+        detail = error.detail
+        if isinstance(detail, dict):
+            detail = detail.get("detail", detail)
+        return "Freesound error %s: %s" % (error.code, detail)
+    return "%s: %s" % (type(error).__name__, error)
+
+def page_count(addon_data):
+    if addon_data.page_size <= 0:
+        return 1
+    return max(1, int(math.ceil(addon_data.sounds / addon_data.page_size)))
+
+def fill_list(addon_data, pager):
+    addon_data.freesound_list.clear()
+    for i in range(0, len(pager.results)):
+        sound = pager[i]
+        _sound = addon_data.freesound_list.add()
+        _sound.sound_id = str(sound.id)
+        _sound.name = str(sound.name)
+        _sound.avg_rating = getattr(sound, "avg_rating", 0) or 0
+        _sound.num_ratings = str(getattr(sound, "num_ratings", 0))
+        _sound.comment = str(getattr(sound, "comment", "") or "")
+        _sound.comments = str(getattr(sound, "comments", "") or "")
+        _sound.duration = str(getattr(sound, "duration", "NaN"))
+        _sound.author = str(sound.username)
+    addon_data.active_list_item = 0
+    addon_data.freesound_list_loaded = len(addon_data.freesound_list) > 0
+
+# Set while the add-on itself changes current_page, so the update callback
+# does not fetch the page a second time
+_setting_page = False
+
+def set_current_page(addon_data, page):
+    global _setting_page
+    _setting_page = True
+    try:
+        addon_data.current_page = page
+    finally:
+        _setting_page = False
+
+def go_to_page(addon_data, page):
+    """Load result page number `page` (clamped to the valid range)."""
+    pager = Freesound_Search.results_pager
+    if not addon_data.freesound_list_loaded or not pager:
+        return
+    page = min(max(1, page), page_count(addon_data))
+    pager = pager.get_page(page)
+    Freesound_Search.results_pager = pager
+    fill_list(addon_data, pager)
+    set_current_page(addon_data, page)
+
+def run_page_change(operator, context, page):
+    try:
+        go_to_page(context.scene.freesound_data, page)
+    except Exception as e:
+        operator.report({'WARNING'}, error_message(e))
+        return {'CANCELLED'}
+    return {'FINISHED'}
+
+def get_preview(operator, context, location):
+    """Return the local path of the active sound preview, downloading it if needed."""
+    addon_data = context.scene.freesound_data
+    item = get_active_item(addon_data)
+    if item is None:
+        operator.report({'WARNING'}, 'Search and select a sound first')
+        return None
+
+    sound_filepath = build_download_filepath(
+        location,
+        context.preferences.addons[__package__].preferences,
+        preview_file_name(item, addon_data.high_quality)
+    )
+    if sound_filepath == "blend_not_saved":
+        operator.report({'WARNING'}, 'Blend file not saved, unable to store file alongside project')
+        return None
+    elif sound_filepath == "pattern_missing":
+        operator.report({'WARNING'}, 'No folder pattern specified, check addon preferences')
+        return None
+
+    if not isfile(sound_filepath):
+        print("Freesound Addon --- Downloading File : %s" % item.name)
+        try:
+            sound_info = get_client(context).get_sound(item.sound_id)
+            sound_filepath = sound_info.retrieve_preview(dirname(sound_filepath),
+                                                         os.path.basename(sound_filepath),
+                                                         addon_data.high_quality)
+        except Exception as e:
+            operator.report({'WARNING'}, 'Download failed. ' + error_message(e))
+            return None
+
+    addon_data.soundfile = sound_filepath
     return sound_filepath
 
 class FREESOUND_UL_List(btypes.UIList):
-    sound_id = 0
-    avg_rating = 0
-    num_ratings = 0
-    comment = 0
-    comments = 0
-
-    def get_sound_id(self):
-        return self.sound_id
-    def get_avg_rating(self):
-        return self.avg_rating
-    def get_num_rating(self):
-        return self.num_rating
-    def get_comment(self):
-        return self.comment
-    def get_comments(self):
-        return self.comments
-
     def draw_item(self,
                   context,
                   layout,
@@ -58,23 +162,7 @@ class FREESOUND_UL_List(btypes.UIList):
                   active_data,
                   active_propname
                   ):
-        obj = active_data
-        addon_data = context.scene.freesound_data
-        sounds = addon_data.freesound_list
-        # split=layout.split(factor=0.5, align=True)
-        # try:
-        #     duration = str(datetime.timedelta(seconds=float(item.duration)))
-        # except:
-        #     duration = "0"
-        # split=layout.split(factor=0.2, align=True)
-        # split.label(text=duration)
         layout.label(text=item.name)
-
-        FREESOUND_UL_List.sound_id = addon_data.freesound_list[addon_data.active_list_item].sound_id
-        FREESOUND_UL_List.avg_rating = addon_data.freesound_list[addon_data.active_list_item].avg_rating
-        FREESOUND_UL_List.num_ratings = addon_data.freesound_list[addon_data.active_list_item].num_ratings
-        FREESOUND_UL_List.comment = addon_data.freesound_list[addon_data.active_list_item].comment
-        FREESOUND_UL_List.comments = addon_data.freesound_list[addon_data.active_list_item].comments
 
 # Freesound Play
 class Freesound_Play(btypes.Operator):
@@ -82,63 +170,36 @@ class Freesound_Play(btypes.Operator):
     bl_idname = 'freesound.play'
     bl_description = 'Preview the sound'
     bl_options = {'REGISTER', 'UNDO'}
-    handle = 0
+    handle = None
     def execute(self, context):
         addon_data = context.scene.freesound_data
 
-        if (not addon_data.freesound_list_loaded):
-            return {'FINISHED'}
-
-        sound_name = addon_data.freesound_list[addon_data.active_list_item].name
-
-        # build filepath
-        sound_filepath = build_download_filepath(
-            addon_data.preview_location, 
-            context.preferences.addons[__package__].preferences, 
-            sound_name
-        )
-        # get possible errors
-        if sound_filepath == "blend_not_saved":
-            self.report({'WARNING'}, 'Blend file not saved, unable to store file alongside project')
-            return {'FINISHED'}
-        elif sound_filepath == "pattern_missing":
-            self.report({'WARNING'}, 'No folder pattern specified, check addon preferences')
-            return {'FINISHED'}
-
-        addon_data.sound_is_playing = True
-        client = Freesound_Validate.get_client(Freesound_Validate)
+        sound_filepath = get_preview(self, context, addon_data.preview_location)
+        if sound_filepath is None:
+            return {'CANCELLED'}
 
         try:
-            sound_id = FREESOUND_UL_List.get_sound_id(FREESOUND_UL_List)
-
-            sound_info = client.get_sound(sound_id)
-            
-            if (addon_data.high_quality):
-                preview_file = str(sound_info.previews.preview_hq_mp3.split("/")[-1])
-            else:
-                preview_file = str(sound_info.previews.preview_lq_mp3.split("/")[-1])
-
-            # get file if not existent
-            if not isfile(sound_filepath):
-                print("Freesound Addon --- Downloading File : %s" % sound_name)
-                sound_filepath = sound_info.retrieve_preview(dirname(sound_filepath),
-                                            sound_info.name,
-                                            addon_data.high_quality)
-
-            addon_data.soundfile = sound_filepath
-
-            print("Freesound Addon --- Playing File : %s" % sound_name)
-
+            stop_playback()
+            print("Freesound Addon --- Playing File : %s" % sound_filepath)
             device = aud.Device()
             sound = aud.Sound.file(sound_filepath)
             Freesound_Play.handle = device.play(sound)
             Freesound_Play.handle.loop_count = -1
-
-        except:
-            self.report({'WARNING'}, '[Play] Search something first...')
+        except Exception as e:
+            self.report({'WARNING'}, 'Playback failed. ' + error_message(e))
             return {'CANCELLED'}
 
+        addon_data.sound_is_playing = True
         return {'FINISHED'}
+
+def stop_playback():
+    handle = Freesound_Play.handle
+    Freesound_Play.handle = None
+    if handle is not None:
+        try:
+            handle.stop()
+        except Exception:
+            pass
 
 
 class FreeSoundItem(btypes.PropertyGroup):
@@ -185,20 +246,16 @@ class FreeSoundItem(btypes.PropertyGroup):
         default="Author"
     )
 
-    @classmethod
-    def poll(cls, context):
-        return context.scene.freesound_data.active_list_item
-
 
 # Definess one instance of the addon data (one per scene)
 class FreeSoundData(btypes.PropertyGroup):
-    def update_max(self, context):
-
-        value = context.scene.freesound_data.current_page
-        if (value > 1):
-            if (context.scene.freesound_data.current_page > value):
-                context.scene.freesound_data.current_page = value
-            ops.freesound.current_page(context.scene.freesound_data.current_page)
+    def update_page(self, context):
+        if _setting_page:
+            return None
+        try:
+            go_to_page(self, self.current_page)
+        except Exception as e:
+            print("Freesound Addon --- " + error_message(e))
         return None
 
     high_quality: BoolProperty(
@@ -266,10 +323,14 @@ class FreeSoundData(btypes.PropertyGroup):
         description = "Current Pager",
         default=1,
         min=1,
-        update=update_max
+        update=update_page
     )
     pager_num: IntProperty(
         description = "Current pager",
+        default = 0
+    )
+    page_size: IntProperty(
+        description = "Number of sounds per result page",
         default = 0
     )
     sounds: IntProperty(
@@ -307,31 +368,7 @@ class Freesound_Page(btypes.Operator):
     bl_idname = "freesound.current_page"
 
     def execute(self, context):
-        if (context.scene.freesound_data.freesound_list_loaded):
-            addon_data = context.scene.freesound_data
-            try:
-                pages = int(addon_data.sounds/len(addon_data.freesound_list))
-            except:
-                pages = 0
-            if (addon_data.current_page > 1 and addon_data.current_page < pages):
-                results_pager = Freesound_Search.results_pager
-                Freesound_Search.results_pager = results_pager.get_page(addon_data.current_page)
-                addon_data.freesound_list.clear()
-
-                for i in range(0, len(Freesound_Search.results_pager.results)):
-                    sound = Freesound_Search.results_pager[i]
-                    _sound = addon_data.freesound_list.add()
-                    _sound.sound_id = str(sound.id)
-                    _sound.name = str(sound.name)
-                    _sound.avg_rating = sound.avg_rating
-                    _sound.duration = str(sound.duration)
-                    _sound.author = str(sound.username)
-                Freesound_Search.results_pager = results_pager
-
-        else:
-            print ("Nothing in search")
-
-        return {'FINISHED'}
+        return run_page_change(self, context, context.scene.freesound_data.current_page)
 
 # Freesound Validate
 class Freesound_Validate(btypes.Operator):
@@ -345,14 +382,20 @@ class Freesound_Validate(btypes.Operator):
     def execute(self, context):
         preferences = context.preferences
         addon_prefs = preferences.addons[__package__].preferences
-        self.client.set_token(addon_prefs.freesound_api)
-        s = self.client.check_access()
-        if (s):
-            addon_prefs.freesound_access = True
-            return {'FINISHED'}
-        else:
+        api_key = addon_prefs.freesound_api.strip()
+        if not api_key or api_key.startswith("Get it here"):
             addon_prefs.freesound_access = False
-            return {'FINISHED'}
+            self.report({'WARNING'}, 'Insert your Freesound API key first')
+            return {'CANCELLED'}
+        self.client.set_token(api_key)
+        try:
+            addon_prefs.freesound_access = self.client.check_access()
+        except Exception as e:
+            self.report({'WARNING'}, 'Unable to reach Freesound. ' + error_message(e))
+            return {'CANCELLED'}
+        if not addon_prefs.freesound_access:
+            self.report({'WARNING'}, 'Invalid Freesound API key')
+        return {'FINISHED'}
 
 # Freesound Info
 class Freesound_Info(btypes.Operator):
@@ -361,17 +404,12 @@ class Freesound_Info(btypes.Operator):
     bl_description = 'Information about the user and sound'
     bl_options = {'REGISTER', 'UNDO'}
     def execute(self, context):
-        try:
-            addon_data = context.scene.freesound_data
-            sound_id = FREESOUND_UL_List.get_sound_id(FREESOUND_UL_List)
-            client = Freesound_Validate.get_client(Freesound_Validate)
-            sound_info = client.get_sound(sound_id)
-            user = sound_info.username
-            url = 'https://www.freesound.org/people/'+ user  + '/sounds/'  + str(sound_id)
-            webbrowser.open(url)
-        except:
-            print ("[Info] Search something first...")
-
+        item = get_active_item(context.scene.freesound_data)
+        if item is None:
+            self.report({'WARNING'}, 'Search and select a sound first')
+            return {'CANCELLED'}
+        url = 'https://freesound.org/people/%s/sounds/%s/' % (quote(item.author), item.sound_id)
+        webbrowser.open(url)
         return {'FINISHED'}
 
 
@@ -385,72 +423,32 @@ class Freesound_Add(btypes.Operator):
     def execute(self, context):
         addon_data = context.scene.freesound_data
 
-        if (not addon_data.freesound_list_loaded):
-            return {'FINISHED'}
-
-        sound_name = addon_data.freesound_list[addon_data.active_list_item].name
-
-        # build filepath
-        sound_filepath = build_download_filepath(
-            addon_data.download_location, 
-            context.preferences.addons[__package__].preferences, 
-            sound_name
-        )
-        # get possible errors
-        if sound_filepath == "blend_not_saved":
-            self.report({'WARNING'}, 'Blend file not saved, unable to store file alongside project')
-            return {'FINISHED'}
-        elif sound_filepath == "pattern_missing":
-            self.report({'WARNING'}, 'No folder pattern specified, check addon preferences')
-            return {'FINISHED'}
-
-        sound_id = FREESOUND_UL_List.get_sound_id(FREESOUND_UL_List)
-        client = Freesound_Validate.get_client(Freesound_Validate)
-        sound_info = client.get_sound(sound_id)
-
-        if (addon_data.high_quality):
-            preview_file = str(sound_info.previews.preview_hq_mp3.split("/")[-1])
-        else:
-            preview_file = str(sound_info.previews.preview_lq_mp3.split("/")[-1])
-
-        # get file if not existent
-        if not isfile(sound_filepath):
-            print("Freesound Addon --- Downloading File : %s" % sound_name)
-            sound_filepath = sound_info.retrieve_preview(dirname(sound_filepath),
-                                        sound_info.name,
-                                        addon_data.high_quality)
-                                        
-        addon_data.soundfile = sound_filepath
+        sound_filepath = get_preview(self, context, addon_data.download_location)
+        if sound_filepath is None:
+            return {'CANCELLED'}
+        sound_name = get_active_item(addon_data).name
 
         print("Freesound Addon --- Adding Sound Strip : %s" % sound_name)
 
-        if not bpy.context.scene.sequence_editor:
-            bpy.context.scene.sequence_editor_create()
-        scn = bpy.context.scene
+        # Blender 5.0+ can show a different scene in the sequencer than the active one
+        scn = getattr(context, "sequencer_scene", None) or context.scene
+        if not scn.sequence_editor:
+            scn.sequence_editor_create()
         seq = scn.sequence_editor
-        cf = scn.frame_current
         # Blender 4.4 renamed "sequences" to "strips"; the old names were removed in 5.0
-        if hasattr(seq, "strips"):
-            sequences = bpy.context.strips
-            strips = seq.strips
-            strips_all = seq.strips_all
-        else:
-            sequences = bpy.context.sequences
-            strips = seq.sequences
-            strips_all = seq.sequences_all
+        strips = seq.strips if hasattr(seq, "strips") else seq.sequences
 
-        if not sequences:
-            addSceneChannel = 1
+        if len(strips) == 0:
+            channel = 1
         else:
-            channels = [s.channel for s in sequences]
-            channels = sorted(list(set(channels)))
-            empty_channel = channels[-1] + 1
-            addSceneChannel = empty_channel
+            channel = min(max(s.channel for s in strips) + 1, MAX_CHANNEL)
 
-        name = basename(addon_data.soundfile)
-        newStrip = strips.new_sound(name=name, filepath=addon_data.soundfile, \
-                                    channel=addSceneChannel, frame_start=cf)
-        strips_all[newStrip.name].frame_start = cf
+        try:
+            strips.new_sound(name=sound_name, filepath=sound_filepath,
+                             channel=channel, frame_start=scn.frame_current)
+        except Exception as e:
+            self.report({'WARNING'}, 'Unable to add the sound strip. ' + error_message(e))
+            return {'CANCELLED'}
         return {'FINISHED'}
 
 # Freesound Search
@@ -459,25 +457,10 @@ class Freesound_Search(btypes.Operator):
     bl_idname = 'freesound.search'
     bl_description = 'Search in Freesound archive'
     bl_options = {'REGISTER', 'UNDO'}
-    results_pager = 0
+    results_pager = None
     def execute(self, context):
-        addon_prefs = context.preferences.addons[__package__].preferences
-        client = Freesound_Validate.get_client(Freesound_Validate)
-
-        if (not client.token):
-            ops.freesound.validate()
-
+        client = get_client(context)
         addon_data = context.scene.freesound_data
-        addon_data.freesound_loading = True
-        try:
-            int(addon_data.duration_from)
-        except:
-            addon_data.duration_from = "-1"
-
-        try:
-            int(addon_data.duration_to)
-        except:
-            addon_data.duration_to = "-1"
 
         if (addon_data.duration_from == -1):
             duration_from = "*"
@@ -496,27 +479,21 @@ class Freesound_Search(btypes.Operator):
             filter_string=duration
 
         rating = addon_data.search_filter
-        Freesound_Search.results_pager = client.text_search(query=addon_data.search_item,filter=filter_string, sort=rating,fields="id,name,previews,username,duration,avg_rating,num_ratings,comment,comments")
-        addon_data.freesound_list.clear()
-        addon_data.sounds = Freesound_Search.results_pager.count
+        addon_data.freesound_loading = True
+        try:
+            pager = client.text_search(query=addon_data.search_item,filter=filter_string, sort=rating,fields="id,name,previews,username,duration,avg_rating,num_ratings,comment,comments")
+        except Exception as e:
+            self.report({'WARNING'}, 'Search failed. ' + error_message(e))
+            return {'CANCELLED'}
+        finally:
+            addon_data.freesound_loading = False
 
-        for i in range(0, len(Freesound_Search.results_pager.results)):
-            sound = Freesound_Search.results_pager[i]
-            _sound = addon_data.freesound_list.add()
-            _sound.sound_id = str(sound.id)
-            _sound.avg_rating = sound.avg_rating
-            _sound.num_ratings = str(sound.num_ratings)
-            _sound.comment = sound.comment
-            _sound.comments = sound.comments
-            _sound.duration = str(sound.duration)
-            _sound.name = sound.name
-            _sound.author = sound.username
-
-        if len(addon_data.freesound_list) > 0:
-            addon_data.freesound_list_loaded = True
-            bpy.ops.freesound.firstpage()
-        else:
-            addon_data.freesound_list_loaded = False
+        Freesound_Search.results_pager = pager
+        addon_data.sounds = pager.count
+        # Only a full first page tells the real page size
+        addon_data.page_size = len(pager.results) if pager.next else max(len(pager.results), 1)
+        fill_list(addon_data, pager)
+        set_current_page(addon_data, 1)
         return {'FINISHED'}
     def get_results_pager(self):
         return self.results_pager
@@ -529,33 +506,7 @@ class Freesound_Next(btypes.Operator):
     bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):
-        addon_data = context.scene.freesound_data
-        try:
-            pages = int(addon_data.sounds/len(addon_data.freesound_list))
-        except:
-            return {'FINISHED'}
-        if (addon_data.current_page > pages):
-            return {'FINISHED'}
-
-        if (addon_data.freesound_list_loaded):
-            results_pager = Freesound_Search.results_pager
-
-            if (addon_data.current_page < pages):
-                addon_data.freesound_list.clear()
-                Freesound_Search.results_pager = results_pager.next_page()
-
-                for i in range(0, len(Freesound_Search.results_pager.results)):
-                    sound = Freesound_Search.results_pager[i]
-                    _sound = addon_data.freesound_list.add()
-                    _sound.sound_id = str(sound.id)
-                    _sound.name = str(sound.name)
-                    _sound.avg_rating = sound.avg_rating
-                    _sound.duration = str(sound.duration)
-                    _sound.author = str(sound.username)
-
-                addon_data.current_page += 1
-
-        return {'FINISHED'}
+        return run_page_change(self, context, context.scene.freesound_data.current_page + 1)
 
 # Freesound Next 10 pages search
 class Freesound_Next10(btypes.Operator):
@@ -565,31 +516,7 @@ class Freesound_Next10(btypes.Operator):
     bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):
-        addon_data = context.scene.freesound_data
-        try:
-            pages = int(addon_data.sounds/len(addon_data.freesound_list))
-        except:
-            return {'FINISHED'}
-        addon_data.current_page += 10
-        if (addon_data.current_page > pages):
-            addon_data.current_page -= 10
-            return {'FINISHED'}
-
-        if (addon_data.freesound_list_loaded):
-            results_pager = Freesound_Search.results_pager
-            if (addon_data.current_page < pages):
-                addon_data.freesound_list.clear()
-                Freesound_Search.results_pager = results_pager.get_page(addon_data.current_page)
-
-                for i in range(0, len(Freesound_Search.results_pager.results)):
-                    sound = Freesound_Search.results_pager[i]
-                    _sound = addon_data.freesound_list.add()
-                    _sound.sound_id = str(sound.id)
-                    _sound.name = str(sound.name)
-                    _sound.avg_rating = sound.avg_rating
-                    _sound.duration = str(sound.duration)
-                    _sound.author = str(sound.username)
-        return {'FINISHED'}
+        return run_page_change(self, context, context.scene.freesound_data.current_page + 10)
 
 # Freesound Last page search
 class Freesound_Last(btypes.Operator):
@@ -599,25 +526,7 @@ class Freesound_Last(btypes.Operator):
     bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):
-        addon_data = context.scene.freesound_data
-        if (addon_data.freesound_list_loaded):
-            results_pager = Freesound_Search.results_pager
-            addon_data.pager_num = int(addon_data.sounds/len(addon_data.freesound_list))
-
-            addon_data.freesound_list.clear()
-            Freesound_Search.results_pager = results_pager.get_page(addon_data.pager_num)
-
-            for i in range(0, len(Freesound_Search.results_pager.results)):
-                sound = Freesound_Search.results_pager[i]
-                _sound = addon_data.freesound_list.add()
-                _sound.sound_id = str(sound.id)
-                _sound.name = str(sound.name)
-                _sound.avg_rating = sound.avg_rating
-                _sound.duration = str(sound.duration)
-                _sound.author = str(sound.username)
-            addon_data.current_page = addon_data.pager_num
-
-        return {'FINISHED'}
+        return run_page_change(self, context, page_count(context.scene.freesound_data))
 
 # Freesound Prev page search
 class Freesound_Prev(btypes.Operator):
@@ -627,58 +536,17 @@ class Freesound_Prev(btypes.Operator):
     bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):
-        addon_data = context.scene.freesound_data
-        cur_page = addon_data.current_page - 1
-        if (cur_page == 0):
-            addon_data.current_page = 1
-            return {'FINISHED'}
-
-        if (addon_data.freesound_list_loaded):
-            results_pager = Freesound_Search.results_pager
-
-            addon_data.freesound_list.clear()
-            Freesound_Search.results_pager = results_pager.previous_page()
-
-            for i in range(0, len(Freesound_Search.results_pager.results)):
-                sound = Freesound_Search.results_pager[i]
-                _sound = addon_data.freesound_list.add()
-                _sound.sound_id = str(sound.id)
-                _sound.name = sound.name
-                _sound.avg_rating = sound.avg_rating
-                _sound.duration = str(sound.duration)
-                _sound.author = sound.username
-            addon_data.current_page -= 1
-        return {'FINISHED'}
+        return run_page_change(self, context, context.scene.freesound_data.current_page - 1)
 
 # Freesound Prev 10 pages search
 class Freesound_Prev10(btypes.Operator):
-    bl_label = 'Next 10'
+    bl_label = 'Prev 10'
     bl_idname = 'freesound.prev10page'
     bl_description = 'Prev 10 pages of sounds'
     bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):
-        addon_data = context.scene.freesound_data
-        cur_page = addon_data.current_page - 10
-        if (cur_page <= 0):
-            addon_data.current_page = 1
-            return {'FINISHED'}
-        if (addon_data.freesound_list_loaded):
-            results_pager = Freesound_Search.results_pager
-
-            addon_data.freesound_list.clear()
-            Freesound_Search.results_pager = results_pager.get_page(addon_data.current_page - 10)
-
-            for i in range(0, len(Freesound_Search.results_pager.results)):
-                sound = Freesound_Search.results_pager[i]
-                _sound = addon_data.freesound_list.add()
-                _sound.sound_id = str(sound.id)
-                _sound.name = str(sound.name)
-                _sound.avg_rating = sound.avg_rating
-                _sound.duration = str(sound.duration)
-                _sound.author = str(sound.username)
-            addon_data.current_page -= 10
-        return {'FINISHED'}
+        return run_page_change(self, context, context.scene.freesound_data.current_page - 10)
 
 # Freesound First page search
 class Freesound_First(btypes.Operator):
@@ -688,35 +556,15 @@ class Freesound_First(btypes.Operator):
     bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):
-        addon_data = context.scene.freesound_data
-        if (addon_data.freesound_list_loaded):
-            results_pager = Freesound_Search.results_pager
-            addon_data.pager_num = int(addon_data.sounds/len(addon_data.freesound_list))
-            addon_data.freesound_list.clear()
-            Freesound_Search.results_pager = results_pager.get_page(1)
+        return run_page_change(self, context, 1)
 
-            for i in range(0, len(Freesound_Search.results_pager.results)):
-                sound = Freesound_Search.results_pager[i]
-                _sound = addon_data.freesound_list.add()
-                _sound.sound_id = str(sound.id)
-                _sound.name = str(sound.name)
-                _sound.avg_rating = sound.avg_rating
-                _sound.duration = str(sound.duration)
-                _sound.author = str(sound.username)
-            addon_data.current_page = 1
-
-        return {'FINISHED'}
 # Freesound Stop
 class Freesound_Pause(btypes.Operator):
     bl_label = 'Pause'
     bl_idname = 'freesound.pause'
     bl_description = 'Pause the sound'
     bl_options = {'REGISTER', 'UNDO'}
-    handle = 0
     def execute(self, context):
-        addon_data = context.scene.freesound_data
-        if (addon_data.freesound_list_loaded):
-            addon_data.sound_is_playing = False
-            Freesound_Play.handle.stop()
+        stop_playback()
+        context.scene.freesound_data.sound_is_playing = False
         return {'FINISHED'}
-

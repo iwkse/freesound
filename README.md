@@ -1,9 +1,18 @@
 # Freesound Add-on
-Blender Freesound add-on 2.0, for Blender 2.80 and later only
+Blender Freesound add-on 3.0, for Blender 2.80 and later (tested up to Blender 5.3)
 
 This add-on allows you to browse, listen and insert sounds from the freesound.org archive in your Blender VSE.
-An API key is required: you can request it from http://freesound.org/apiv2/apply (Freesound login is required)
+An API key is required: you can request it from https://freesound.org/apiv2/apply (Freesound login is required)
 The plugin documentation button opens the API freesound page as well.
+
+# What's new in 3.0
+
+- Compatible with Blender 4.4+ and 5.x (new "strips" sequencer API, Python 3.12+, per-workspace sequencer scene).
+- HTTPS certificates are verified again, and network calls time out instead of freezing Blender.
+- Cached previews are stored per sound and quality (`<id>_<hq|lq>_<name>.mp3`), so sounds with the same name, or HQ and LQ previews, no longer overwrite each other. Previews downloaded with 2.x are downloaded again once.
+- Fixed result paging: correct page count, last page reachable, jumping to a typed page number.
+- Play, Add and Info always use the selected sound; errors are reported in Blender instead of failing silently.
+- Rating shows full and half stars and the number of ratings.
 
 # Installation
 To install the add-on, clone the GIT repository or download the release and manually install from the user preferences dialog.
