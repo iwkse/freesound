@@ -1,7 +1,7 @@
 schema_version = "1.0.0"
 
 id = "freesound"
-version = "3.0.0"
+version = "3.0.1"
 name = "Freesound"
 tagline = "Search, preview and add Freesound.org sounds in the sequencer"
 maintainer = "Salvatore De Paolis <iwkse@claws-mail.org>"
