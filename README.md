@@ -55,10 +55,9 @@ Please respect the license of each sound (CC0, CC BY, CC BY-NC...) when using it
 
 Freesound add-on is free and open source. If it saves you time, you can support its development:
 
-- [GitHub Sponsors](https://github.com/sponsors/iwkse)
-- [Ko-fi](https://ko-fi.com/iwkse)
+[Support on Ko-fi](https://ko-fi.com/iwkse)
 
-You can also find these links in the add-on preferences.
+You can also find this link in the add-on preferences.
 
 # Contributing
 
