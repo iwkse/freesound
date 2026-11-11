@@ -15,7 +15,7 @@ A free API key is required: you can request it at https://freesound.org/apiv2/ap
 
 # Installation
 
-**Blender 4.2 and later:** download `freesound-3.0.0.zip` from the [Releases](https://github.com/iwkse/freesound/releases) page and install it with Preferences > Add-ons > Install from Disk. The add-on has also been submitted to the Blender Extensions platform; once approved it will be available in Preferences > Get Extensions.
+**Blender 4.2 and later:** download the latest `freesound-x.y.z.zip` from the [Releases](https://github.com/iwkse/freesound/releases) page and install it with Preferences > Add-ons > Install from Disk. The add-on has also been submitted to the Blender Extensions platform; once approved it will be available in Preferences > Get Extensions.
 
 **Blender 2.80 to 4.1:** clone this repository (or download it as a zip) and install it as a legacy add-on from the Preferences dialog.
 
