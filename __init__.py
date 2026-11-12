@@ -90,8 +90,8 @@ bl_info = {
     "category": "Sequencer",
     "location": "Sequencer",
     "description": "Connect to freesound to list sounds",
-    "doc_url": "https://freesound.org/apiv2/apply",
-    "wiki_url": "https://freesound.org/apiv2/apply",
+    "doc_url": "https://github.com/iwkse/freesound#readme",
+    "wiki_url": "https://github.com/iwkse/freesound#readme",
     "tracker_url": "https://blenderartists.org/t/freesound-add-on/671946",
     "support": "COMMUNITY"}
 
