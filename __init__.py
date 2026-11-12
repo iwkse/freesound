@@ -93,8 +93,8 @@ bl_info = {
     "category": "Sequencer",
     "location": "Sequencer",
     "description": "Connect to freesound to list sounds",
-    "doc_url": "https://freesound.org/apiv2/apply",
-    "wiki_url": "https://freesound.org/apiv2/apply",
+    "doc_url": "https://github.com/iwkse/freesound#readme",
+    "wiki_url": "https://github.com/iwkse/freesound#readme",
     "tracker_url": "https://blenderartists.org/t/freesound-add-on/671946",
     "support": "COMMUNITY"}
 
@@ -128,6 +128,9 @@ def register():
 # Extend the scene class here to include the addon data
     Scene.freesound_data = PointerProperty(type=freesound.FreeSoundData)
 def unregister():
+    # A looping preview would keep playing with no way to stop it once the
+    # add-on is disabled or reloaded
+    freesound.stop_playback()
     if hasattr(Scene, "freesound_data"):
         del Scene.freesound_data
     for cls in reversed(classes):
