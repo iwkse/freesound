@@ -16,22 +16,29 @@
 #
 # ##### END GPL LICENSE BLOCK #####
 
-# Reload the submodules when Blender reloads the add-on (F8 / Reload Scripts)
-if "freesound_api" in locals():
-    import importlib
-    importlib.reload(freesound_api)
-    importlib.reload(freesound)
-    importlib.reload(ui)
+# Support reloading the add-on (F8 / Reload Scripts), as described in
+# https://developer.blender.org/docs/handbook/extensions/addon_dev_setup/#reloading-scripts
+_needs_reload = "bpy" in locals()
 
 from os.path import join
+
+import bpy
 from bpy.utils import register_class, unregister_class
-from bpy.types import Menu
-from bpy.types import Header
-from bpy.types import Scene
-from bpy.types import Operator, AddonPreferences
+from bpy.types import Scene, AddonPreferences
 from bpy.props import StringProperty, BoolProperty, PointerProperty
-from .ui import *
-from .freesound import *
+
+from . import (
+    freesound_api,
+    freesound,
+    ui,
+)
+
+if _needs_reload:
+    import importlib
+    # Dependencies first: freesound uses freesound_api, ui uses freesound.
+    freesound_api = importlib.reload(freesound_api)
+    freesound = importlib.reload(freesound)
+    ui = importlib.reload(ui)
 
 class ApiAddonPreferences(AddonPreferences):
     # this must match the addon name, use '__package__'
@@ -77,15 +84,11 @@ class ApiAddonPreferences(AddonPreferences):
         box.prop(self, "freesound_project_folder_pattern")
         box.prop(self, "freesound_download_folderpath")
 
-        box = layout.box()
-        box.label(text="Freesound add-on is free. If it helps your work, consider supporting it:", icon='FUND')
-        box.operator("wm.url_open", text="Support on Ko-fi").url = "https://ko-fi.com/iwkse"
-
 
 bl_info = {
     "name": "Freesound",
     "author": "Salvatore De Paolis",
-    "version": (3, 0, 1),
+    "version": (3, 0, 2),
     "blender": (2, 80, 0),
     "category": "Sequencer",
     "location": "Sequencer",
@@ -97,25 +100,25 @@ bl_info = {
 
 classes = (
         ApiAddonPreferences,
-        FREESOUND_UL_List,
-        Freesound_Play,
-        FreeSoundItem,
-        FreeSoundData,
-        Freesound_Page,
-        Freesound_Validate,
-        Freesound_Info,
-        Freesound_Add,
-        Freesound_Search,
-        Freesound_Next,
-        Freesound_Next10,
-        Freesound_Last,
-        Freesound_Prev,
-        Freesound_Prev10,
-        Freesound_First,
-        Freesound_Pause,
-        FREESOUND_PT_Panel,
-        FREESOUND_PT_subpanel_search,
-        FREESOUND_PT_subpanel_settings,
+        freesound.FREESOUND_UL_List,
+        freesound.Freesound_Play,
+        freesound.FreeSoundItem,
+        freesound.FreeSoundData,
+        freesound.Freesound_Page,
+        freesound.Freesound_Validate,
+        freesound.Freesound_Info,
+        freesound.Freesound_Add,
+        freesound.Freesound_Search,
+        freesound.Freesound_Next,
+        freesound.Freesound_Next10,
+        freesound.Freesound_Last,
+        freesound.Freesound_Prev,
+        freesound.Freesound_Prev10,
+        freesound.Freesound_First,
+        freesound.Freesound_Pause,
+        ui.FREESOUND_PT_Panel,
+        ui.FREESOUND_PT_subpanel_search,
+        ui.FREESOUND_PT_subpanel_settings,
 )
 
 # Registration
@@ -123,7 +126,7 @@ def register():
     for cls in classes:
         register_class(cls)
 # Extend the scene class here to include the addon data
-    Scene.freesound_data = PointerProperty(type=FreeSoundData)
+    Scene.freesound_data = PointerProperty(type=freesound.FreeSoundData)
 def unregister():
     # A looping preview would keep playing with no way to stop it once the
     # add-on is disabled or reloaded
