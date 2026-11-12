@@ -125,6 +125,9 @@ def register():
 # Extend the scene class here to include the addon data
     Scene.freesound_data = PointerProperty(type=FreeSoundData)
 def unregister():
+    # A looping preview would keep playing with no way to stop it once the
+    # add-on is disabled or reloaded
+    stop_playback()
     if hasattr(Scene, "freesound_data"):
         del Scene.freesound_data
     for cls in reversed(classes):
