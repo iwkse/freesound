@@ -130,7 +130,7 @@ def register():
 def unregister():
     # A looping preview would keep playing with no way to stop it once the
     # add-on is disabled or reloaded
-    stop_playback()
+    freesound.stop_playback()
     if hasattr(Scene, "freesound_data"):
         del Scene.freesound_data
     for cls in reversed(classes):
