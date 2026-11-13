@@ -1,6 +1,8 @@
 # Freesound Add-on
 Blender Freesound add-on 3.0, for Blender 2.80 and later (tested up to Blender 5.3)
 
+**Available on the official Blender Extensions platform:** [extensions.blender.org/add-ons/freesound](https://extensions.blender.org/add-ons/freesound/)
+
 This add-on allows you to browse, listen to and insert sounds from the [freesound.org](https://freesound.org) archive in your Blender VSE.
 A free API key is required: you can request it at https://freesound.org/apiv2/apply (a free Freesound account is required).
 
@@ -15,7 +17,7 @@ A free API key is required: you can request it at https://freesound.org/apiv2/ap
 
 # Installation
 
-**Blender 4.2 and later:** download the latest `freesound-x.y.z.zip` from the [Releases](https://github.com/iwkse/freesound/releases) page and install it with Preferences > Add-ons > Install from Disk. The add-on has also been submitted to the Blender Extensions platform; once approved it will be available in Preferences > Get Extensions.
+**Blender 4.2 and later:** in Blender open Preferences > Get Extensions, search for "Freesound" and click Install. Updates are then offered automatically by Blender. You can also install it from the [extension page](https://extensions.blender.org/add-ons/freesound/), or download the latest `freesound-x.y.z.zip` from the [Releases](https://github.com/iwkse/freesound/releases) page and use Preferences > Add-ons > Install from Disk.
 
 **Blender 2.80 to 4.1:** clone this repository (or download it as a zip) and install it as a legacy add-on from the Preferences dialog.
 
